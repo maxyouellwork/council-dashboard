@@ -4,13 +4,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Kirklees UTM Studio Dashboard** is an internal link tracking and analytics system for Kirklees Council. It provides:
+**Kirklees Communications Analytics Hub** is an internal link tracking and analytics system for Kirklees Council. It provides:
 - UTM link creation and management (via `utm-admin.html`)
-- Campaign performance analytics and reporting (via `utm-dashboard.html` and `utm-summary.html`)
+- Campaign performance analytics and reporting (via `utm-dashboard.html`, `utm-summary.html`, `campaign-utm-dashboard.html`)
 - QR code generation for print materials
 - Email campaign tracking (via Granicus integration)
+- Quarterly report generation
 
-Data is stored in **Airtable** (Base ID: `app5iqmIuu0sOTocu`, Table: `UTMLinks`) with real-time API access from the frontend.
+Data is stored in **Airtable** (Base ID: `app5iqmIuu0sOTocu`) with real-time API access from the frontend.
+
+## Live URLs
+
+- **Production**: https://wip.maxyouell.co.uk/council-dashboard/
+- **Direct Pages URL**: https://council-dashboard.pages.dev/
+- **GitHub**: https://github.com/maxyouellwork/council-dashboard
+
+**Authentication** (Basic Auth):
+- Username: `kirklees`
+- Password: `comms2026`
 
 ## Technology Stack
 
@@ -19,105 +30,231 @@ Data is stored in **Airtable** (Base ID: `app5iqmIuu0sOTocu`, Table: `UTMLinks`)
 - **QR Codes**: qrcode@1.5.1 library
 - **Data**: Airtable API (direct client-side calls)
 - **Build**: Vite
-- **Deployment**: Cloudflare-ready (`.wrangler` config present)
+- **Hosting**: Cloudflare Pages
+- **Routing**: Cloudflare Worker (`wip-router`)
+- **Auth**: Basic Auth via Worker + Pages Functions middleware
 
 ## Project Structure
 
 ```
 utm-dashboard/
-├── utm-admin.html          # Link creation form (512 lines)
-├── utm-dashboard.html      # Main analytics dashboard (928 lines)
-├── utm-summary.html        # Executive summary view (727 lines)
-├── granicus-dashboard.html # Email campaign analytics (1195 lines)
-├── granicus-import.html    # Bulk Granicus data import (1019 lines)
-├── images/                 # Static assets
-├── package.json            # npm scripts (dev, build, preview)
-└── .wrangler/              # Cloudflare Workers config
+├── index.html                    # Hub/landing page linking all dashboards
+├── utm-admin.html                # Link creation form with QR generation
+├── utm-dashboard.html            # Full analytics dashboard with filters
+├── utm-summary.html              # Executive summary (30-day snapshot)
+├── campaign-utm-dashboard.html   # Campaign-focused tracking view
+├── campaign-results.html         # Single campaign results view
+├── email-bulletins-dashboard.html # Email bulletin analytics
+├── quarterly-export-generator.html # PowerPoint report generator
+├── granicus-dashboard.html       # Granicus email platform analytics
+├── granicus-import.html          # Bulk Granicus data import
+│
+├── config.js                     # API keys (NOT committed - in .gitignore)
+├── config.example.js             # Template for config.js
+│
+├── functions/
+│   └── _middleware.js            # Cloudflare Pages auth middleware
+│
+├── wip-router/                   # Cloudflare Worker for path routing
+│   ├── wrangler.toml
+│   └── src/index.js
+│
+├── scripts/
+│   └── build.js                  # Build script with env var injection
+│
+├── vite.config.js                # Vite config for multi-page build
+├── package.json
+└── dist/                         # Built output (not committed)
 ```
 
-## Common Development Commands
+## Development Commands
 
 ```bash
+# Install dependencies
+npm install
+
 # Local development server (hot reload)
 npm run dev
 
-# Build for production
+# Build for production (uses config.js)
+npm run build:local
+
+# Build for CI/CD (uses environment variables)
 npm run build
 
-# Preview production build locally
+# Preview production build
 npm run preview
 ```
 
-After running `npm run dev`, the dashboard is accessible at `http://localhost:5173` (Vite default).
+## Configuration
 
-## Architecture & Key Concepts
+### Local Development
 
-### Single-File Page Architecture
-Each HTML file is a complete, self-contained application with inline JavaScript and CSS. No separate build step is required to run—HTML files work directly.
+1. Copy `config.example.js` to `config.js`
+2. Add your Airtable API key:
+```javascript
+window.CONFIG = {
+  AIRTABLE_API_KEY: "your-key-here",
+  AIRTABLE_BASE_ID: "app5iqmIuu0sOTocu"
+};
+```
 
-### Data Flow
+### Production (Cloudflare)
 
-1. **Admin creates link** (utm-admin.html)
-   - Form builds final URL with UTM parameters (campaign, source, medium, content)
-   - Generates short code
-   - Creates QR code
-   - Saves to Airtable
+Environment variables are set in Cloudflare Pages:
+- `AIRTABLE_API_KEY` - Airtable Personal Access Token
 
-2. **User clicks link** → Redirects with UTM parameters to analytics platforms
+## Deployment
 
-3. **Dashboards visualize** (utm-dashboard.html, utm-summary.html)
-   - Fetch all records from Airtable API
-   - Apply client-side filters (campaign, channel, date range, status)
-   - Calculate KPIs and render charts
+### Deploying Updates
 
-### Airtable Integration
+```bash
+# 1. Build the project
+npm run build:local
 
-- **API Key**: Embedded in HTML (intentionally public for internal staff use)
-- **Fields**: Code, BaseURL, FinalURL, Campaign, Source, Medium, Content, Channel, Owner, Notes, ShortURL, Clicks, Active, Date
-- **Direct API calls** from frontend (no backend proxy)
+# 2. Deploy to Cloudflare Pages
+wrangler pages deploy dist --project-name council-dashboard --branch main
 
-### UI/UX Patterns
+# 3. If worker routing changed, also deploy the worker
+cd wip-router && wrangler deploy
+```
 
-- **Design System**: CSS custom properties (--bg, --card, --accent, etc.)
-- **Responsive**: Mobile-first with flexbox layout
-- **Consistent styling**: Rounded cards, shadows, gradient backgrounds across all pages
+### Architecture
 
-## Important Files & Line References
+```
+User Request
+     │
+     ▼
+┌─────────────────────────────────┐
+│  wip.maxyouell.co.uk/*          │
+│  (Cloudflare Worker: wip-router)│
+│  - Basic Auth check             │
+│  - Routes /council-dashboard/*  │
+│    to Pages project             │
+└─────────────────────────────────┘
+     │
+     ▼
+┌─────────────────────────────────┐
+│  council-dashboard.pages.dev    │
+│  (Cloudflare Pages)             │
+│  - _middleware.js (Basic Auth)  │
+│  - Static HTML files            │
+│  - config.js (API keys)         │
+└─────────────────────────────────┘
+     │
+     ▼
+┌─────────────────────────────────┐
+│  Airtable API                   │
+│  - UTMLinks table               │
+│  - GranicusBulletins table      │
+│  - GranicusLinks table          │
+└─────────────────────────────────┘
+```
 
-- **utm-dashboard.html**: Main dashboard with filters, KPIs, charts, and link table
-  - Filters section: Apply campaign, channel, date range, and link status filters
-  - Charts rendered with Chart.js
+### Worker Routing (wip-router)
 
-- **utm-admin.html**: Link creation interface
-  - Form validation for UTM parameters
-  - QR code generation and display
-  - Airtable save functionality
+The `wip-router` Worker handles:
+1. Basic authentication for all requests
+2. Redirects `/council-dashboard` → `/council-dashboard/` (trailing slash for relative links)
+3. Proxies requests to the Pages project
+4. Serves an index page at `wip.maxyouell.co.uk/`
 
-- **utm-summary.html**: Executive snapshot focused on 30-day metrics
-  - Simplified UI compared to full dashboard
+To add more projects to `wip.maxyouell.co.uk`:
+```javascript
+// In wip-router/src/index.js
+const routes = {
+  '/council-dashboard': 'https://council-dashboard.pages.dev',
+  '/new-project': 'https://new-project.pages.dev',
+};
+```
 
-- **granicus-dashboard.html**: Email platform analytics
-- **granicus-import.html**: Bulk data import for Granicus campaign data
+### DNS Configuration
 
-## Testing & Quality
+`wip.maxyouell.co.uk` requires a DNS record in Cloudflare:
+- Type: AAAA
+- Name: wip
+- Content: `100::`
+- Proxy: Enabled (orange cloud)
 
-Currently no automated tests are configured. Manual testing of:
-- Airtable API connectivity and data retrieval
-- Chart rendering with various data sets
-- Form validation and link creation
-- QR code generation accuracy
-- Responsive design on mobile/tablet
+## Airtable Schema
 
-## Deployment Notes
+### UTMLinks Table
+| Field | Type | Description |
+|-------|------|-------------|
+| Code | Text | Short code for URL |
+| BaseURL | URL | Original destination URL |
+| FinalURL | URL | Full URL with UTM params |
+| Campaign | Text | utm_campaign value |
+| Source | Text | utm_source value |
+| Medium | Text | utm_medium value |
+| Content | Text | utm_content value |
+| Channel | Select | High-level channel (Email, Social, etc.) |
+| Owner | Text | Who created the link |
+| Notes | Text | Additional notes |
+| ShortURL | URL | kirklees.link short URL |
+| Clicks | Number | Click count |
+| Active | Checkbox | Is link active |
+| Date | Date | Creation date |
 
-- Static hosting ready (any CDN, Vercel, Netlify, GitHub Pages)
-- Optional Cloudflare Workers integration (for short link resolution at `kirklees.link`)
-- HTML files are self-contained; no server-side rendering required
-- Airtable API key must remain accessible in frontend code (intentional for internal use)
+### GranicusBulletins Table
+Email bulletin metadata imported from Granicus reports.
 
-## Development Tips
+### GranicusLinks Table
+Individual link performance from email bulletins.
 
-- **Local testing without Airtable**: Modify JavaScript to use mock data instead of API calls
-- **Chart.js options**: Refer to Chart.js documentation for customization
-- **CSS updates**: Use CSS custom properties (root `--*` variables) for consistent theming
-- **QR code generation**: Uses qrcode library; configure size and error correction in `generateQRCode()` function
+## Changing Authentication
+
+### Update Password
+
+1. Update `wip-router/src/index.js`:
+```javascript
+const validUser = env.AUTH_USER || 'newuser';
+const validPass = env.AUTH_PASS || 'newpassword';
+```
+
+2. Update `functions/_middleware.js`:
+```javascript
+const AUTH_USER = env.AUTH_USER || 'newuser';
+const AUTH_PASS = env.AUTH_PASS || 'newpassword';
+```
+
+3. Redeploy both:
+```bash
+cd wip-router && wrangler deploy
+cd .. && npm run build:local && wrangler pages deploy dist --project-name council-dashboard
+```
+
+Or set environment variables in Cloudflare dashboard for `AUTH_USER` and `AUTH_PASS`.
+
+## Troubleshooting
+
+### Links not working / 404 errors
+- Ensure URLs include `/council-dashboard/` prefix
+- Check trailing slash: `/council-dashboard/` not `/council-dashboard`
+
+### Auth not working
+- Clear browser cache/cookies
+- Check both Worker and Pages middleware are deployed
+
+### API errors
+- Verify `config.js` exists and has valid API key
+- Check Airtable API key hasn't expired
+
+### DNS issues
+- Flush local DNS: `sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder`
+- Wait 1-2 minutes for propagation
+
+## Git Workflow
+
+```bash
+# Make changes, then:
+git add -A
+git commit -m "Description of changes"
+git push origin main
+
+# Then deploy (not automatic):
+npm run build:local
+wrangler pages deploy dist --project-name council-dashboard
+```
+
+Note: GitHub repo does NOT contain API keys. The `config.js` file is in `.gitignore`.

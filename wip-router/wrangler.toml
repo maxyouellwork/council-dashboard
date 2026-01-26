@@ -1,0 +1,7 @@
+name = "wip-router"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+routes = [
+  { pattern = "wip.maxyouell.co.uk/*", zone_name = "maxyouell.co.uk" }
+]
