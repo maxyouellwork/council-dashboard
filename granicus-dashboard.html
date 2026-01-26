@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Kirklees Email Performance – Granicus Snapshot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      --bg: #e4e4e4;
+      --card: #ffffff;
+      --accent: #008491;
+      --accent-2: #6b1b78;
+      --text-main: #0f172a;
+      --shadow: 0 18px 46px rgba(13, 34, 64, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(0, 132, 145, 0.12), transparent 32%),
+        radial-gradient(circle at 80% 10%, rgba(107, 27, 120, 0.12), transparent 28%),
+        var(--bg);
+      padding: 24px 12px 32px;
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+    }
+
+    .shell {
+      width: min(1180px, 100%);
+      background: var(--card);
+      border-radius: 22px;
+      padding: 20px 20px 22px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(15, 23, 42, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .subtitle {
+      margin: 2px 0 0;
+      font-size: 13px;
+      opacity: 0.85;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      background: rgba(0, 132, 145, 0.08);
+      font-size: 11px;
+      font-weight: 600;
+      color: #0f172a;
+      white-space: nowrap;
+    }
+
+    .chip-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #16a34a;
+    }
+
+    .filters-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: flex-end;
+      margin-top: 6px;
+    }
+
+    .filter-field {
+      display: flex;
+      flex-direction: column;
+      min-width: 160px;
+    }
+
+    .filter-field label {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 3px;
+    }
+
+    .filter-field select {
+      padding: 7px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(15, 23, 42, 0.18);
+      font-size: 13px;
+      outline: none;
+      background: #ffffff;
+    }
+
+    .filter-field select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(0, 132, 145, 0.2);
+    }
+
+    .status-bar {
+      font-size: 12px;
+      opacity: 0.85;
+      margin-top: 4px;
+    }
+
+    .status-bar strong {
+      font-weight: 600;
+    }
+
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .kpi-card {
+      background: linear-gradient(145deg, #f6f7fb 0%, #edf3f9 100%);
+      border-radius: 14px;
+      padding: 12px 12px 10px;
+      border: 1px solid rgba(15, 23, 42, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-height: 72px;
+    }
+
+    .kpi-label {
+      font-size: 11px;
+      opacity: 0.75;
+    }
+
+    .kpi-value {
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .kpi-footnote {
+      font-size: 10px;
+      opacity: 0.75;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1.6fr;
+      gap: 14px;
+      margin-top: 8px;
+    }
+
+    .panel {
+      background: #f6f7fb;
+      border-radius: 16px;
+      padding: 12px 12px 10px;
+      border: 1px solid rgba(15, 23, 42, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .panel-subtitle {
+      margin: 0;
+      font-size: 11px;
+      opacity: 0.75;
+    }
+
+    .chart-wrapper {
+      position: relative;
+      height: 260px;
+      width: 100%;
+    }
+
+    .insights-list {
+      margin: 4px 0 0;
+      padding-left: 18px;
+      font-size: 12px;
+    }
+
+    .insights-list li + li {
+      margin-top: 3px;
+    }
+
+    .muted {
+      opacity: 0.7;
+    }
+
+    .table-wrapper {
+      margin-top: 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      overflow: hidden;
+      background: #ffffff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+
+    thead {
+      background: #f1f4fb;
+    }
+
+    th,
+    td {
+      padding: 7px 8px;
+      text-align: left;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+      white-space: nowrap;
+    }
+
+    th {
+      font-weight: 600;
+      opacity: 0.85;
+      font-size: 11px;
+    }
+
+    tbody tr:nth-child(even) {
+      background: rgba(248, 250, 252, 0.85);
+    }
+
+    .td-name {
+      max-width: 230px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      background: rgba(0, 132, 145, 0.08);
+    }
+
+    @media (max-width: 980px) {
+      .grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    @media (max-width: 820px) {
+      .kpi-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 560px) {
+      .kpi-row {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .shell {
+        padding: 16px 12px 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="header-row">
+      <div>
+        <h1>Email bulletin performance snapshot</h1>
+        <p class="subtitle">
+          High-level performance of Granicus bulletins sent from this account.
+        </p>
+      </div>
+      <div class="chip">
+        <span class="chip-dot"></span>
+        Live data – loaded from Airtable
+      </div>
+    </div>
+
+    <div class="filters-row">
+      <div class="filter-field">
+        <label for="dateRangeFilter">Reporting period</label>
+        <select id="dateRangeFilter">
+          <option value="last90">Last 90 days</option>
+          <option value="all">All time</option>
+        </select>
+      </div>
+      <div class="filter-field">
+        <label for="audienceFilter">Audience</label>
+        <select id="audienceFilter">
+          <option value="all">All bulletins</option>
+          <option value="internal">Internal only</option>
+          <option value="external">External only</option>
+        </select>
+      </div>
+      <div class="filter-field">
+        <label>&nbsp;</label>
+        <span class="pill muted" id="bulletinCountBadge">No bulletins loaded yet</span>
+      </div>
+    </div>
+
+    <div id="statusBar" class="status-bar">Loading bulletins from Airtable…</div>
+
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-label">Bulletins sent</div>
+        <div id="kpiBulletins" class="kpi-value">–</div>
+        <div class="kpi-footnote">Emails included in this reporting period</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Delivered emails</div>
+        <div id="kpiDelivered" class="kpi-value">–</div>
+        <div class="kpi-footnote">Total delivered (excluding bounces)</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Average open rate</div>
+        <div id="kpiOpenRate" class="kpi-value">–</div>
+        <div class="kpi-footnote">Weighted by delivered volume</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Average click rate</div>
+        <div id="kpiClickRate" class="kpi-value">–</div>
+        <div class="kpi-footnote">Clicks as a share of delivered emails</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <div class="panel-header">
+          <p class="panel-title">Opens and clicks over time</p>
+          <p class="panel-subtitle">Open and click rates for each bulletin in the selected period.</p>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="ratesChart"></canvas>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <p class="panel-title">Top bulletins by clicks</p>
+          <p class="panel-subtitle">Bulletins with the highest number of unique clicks.</p>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="topBulletinsChart"></canvas>
+        </div>
+        <ul id="insightsList" class="insights-list">
+          <li class="muted">Insights will appear here once data has loaded.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <p class="panel-title">Bulletin table</p>
+        <p class="panel-subtitle">Key stats for each bulletin in this period (for quick reference and export).</p>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Date sent</th>
+              <th>Bulletin</th>
+              <th>Delivered</th>
+              <th>Open rate</th>
+              <th>Click rate</th>
+              <th>Unique opens</th>
+              <th>Unique clicks</th>
+              <th>Total clicks</th>
+              <th>Links</th>
+            </tr>
+          </thead>
+          <tbody id="bulletinsTableBody">
+            <tr>
+              <td colspan="9" class="muted">Loading…</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+        <div class="grid">
+      <div class="panel">
+        <div class="panel-header">
+          <p class="panel-title">Top links across bulletins</p>
+          <p class="panel-subtitle">Most-clicked individual links in the selected period.</p>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="topLinksChart"></canvas>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <p class="panel-title">Top destinations by domain</p>
+          <p class="panel-subtitle">Where people go when they click from our bulletins.</p>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="domainsChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script>
+    // ---------------------------
+    // Airtable config – loaded from config.js
+    // ---------------------------
+    const airtableBaseId = window.CONFIG.AIRTABLE_BASE_ID;
+    const airtableBulletinsTable = "GranicusBulletins";
+    const airtableLinksTable = "GranicusLinks";
+    const airtableApiKey = window.CONFIG.AIRTABLE_API_KEY;
+
+    const airtableUrl = `https://api.airtable.com/v0/${airtableBaseId}/${encodeURIComponent(
+      airtableBulletinsTable
+    )}`;
+    const airtableLinksUrl = `https://api.airtable.com/v0/${airtableBaseId}/${encodeURIComponent(
+      airtableLinksTable
+    )}`;
+
+    const dateRangeFilter = document.getElementById("dateRangeFilter");
+    const audienceFilter = document.getElementById("audienceFilter");
+    const statusBar = document.getElementById("statusBar");
+    const bulletinCountBadge = document.getElementById("bulletinCountBadge");
+
+    const kpiBulletins = document.getElementById("kpiBulletins");
+    const kpiDelivered = document.getElementById("kpiDelivered");
+    const kpiOpenRate = document.getElementById("kpiOpenRate");
+    const kpiClickRate = document.getElementById("kpiClickRate");
+
+    const bulletinsTableBody = document.getElementById("bulletinsTableBody");
+    const insightsList = document.getElementById("insightsList");
+
+    let allBulletins = [];
+    let allLinks = [];
+    let ratesChart;
+    let topBulletinsChart;
+    let topLinksChart;
+    let domainsChart;
+
+    function formatNumber(n) {
+      if (n === null || n === undefined || isNaN(n)) return "0";
+      return n.toLocaleString("en-GB");
+    }
+
+    function formatPercent(value, decimals = 1) {
+      if (value === null || value === undefined || isNaN(value)) return "–";
+      return `${value.toFixed(decimals)}%`;
+    }
+
+    function normaliseRate(raw) {
+      if (raw === null || raw === undefined || isNaN(raw)) return null;
+      const n = Number(raw);
+      if (n === 0) return 0;
+      // Airtable percent fields typically store 0.42 for 42%
+      if (n > 1.5) {
+        return n > 100 ? 1 : n / 100;
+      }
+      return n;
+    }
+
+    function parseSentAtDate(raw) {
+      if (!raw) return null;
+      const str = String(raw).trim();
+
+      // First try native Date parsing (for true ISO values)
+      const isoTry = new Date(str);
+      if (!isNaN(isoTry.getTime())) {
+        return isoTry;
+      }
+
+      // Then try DD-MM-YYYY or DD/MM/YYYY (e.g. 05-12-2025 06:05 PM GMT)
+      const m = str.match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+      if (m) {
+        const day = parseInt(m[1], 10);
+        const month = parseInt(m[2], 10);
+        const year = parseInt(m[3], 10);
+        const d = new Date(year, month - 1, day);
+        if (!isNaN(d.getTime())) {
+          return d;
+        }
+      }
+
+      return null;
+    }
+
+    function formatDate(raw) {
+      if (!raw) return "–";
+
+      let d = new Date(raw);
+      if (isNaN(d.getTime())) {
+        d = parseSentAtDate(raw);
+      }
+      if (!d || isNaN(d.getTime())) return "–";
+
+      return d.toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
+    }
+
+    function applyDateFilter(records) {
+      const periodValue = dateRangeFilter.value;
+      const audienceValue = audienceFilter ? audienceFilter.value : "all";
+
+      const now = new Date();
+      const threshold90 = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+      threshold90.setHours(0, 0, 0, 0);
+
+      return records.filter((rec) => {
+        const rawDate = rec.SentAt || rec.createdTime;
+        if (!rawDate) return false;
+
+        let d = parseSentAtDate(rawDate);
+        if (!d) {
+          d = new Date(rawDate);
+        }
+        if (!d || isNaN(d.getTime())) return false;
+
+        d.setHours(0, 0, 0, 0);
+
+        // Date filter
+        if (periodValue === "last90" && d < threshold90) {
+          return false;
+        }
+        // "all" passes everything on date
+
+        // Audience filter (based on Airtable AudienceType)
+        const type = (rec.AudienceType || "").toLowerCase();
+        if (audienceValue === "internal" && type !== "internal") {
+          return false;
+        }
+        if (audienceValue === "external" && type !== "external") {
+          return false;
+        }
+
+        return true;
+      });
+    }
+
+    function updateStatus(filtered) {
+      const total = allBulletins.length;
+      const label =
+        dateRangeFilter.value === "last90" ? "last 90 days" : "all time";
+      statusBar.innerHTML = `Showing <strong>${filtered.length}</strong> bulletins from <strong>${label}</strong> (out of ${total} stored in Airtable).`;
+
+      if (!total) {
+        bulletinCountBadge.textContent = "No bulletins found";
+        bulletinCountBadge.classList.add("muted");
+      } else {
+        bulletinCountBadge.textContent = `${filtered.length} bulletins in view`;
+        bulletinCountBadge.classList.remove("muted");
+      }
+    }
+
+    function computeAggregates(records) {
+      let totalDelivered = 0;
+      let totalSent = 0;
+      let weightedOpenSum = 0;
+      let weightedClickSum = 0;
+
+      records.forEach((rec) => {
+        const delivered = typeof rec.Delivered === "number" ? rec.Delivered : 0;
+        const sent = typeof rec.TotalSent === "number" ? rec.TotalSent : 0;
+        const openRate = normaliseRate(rec.OpenRate);
+        const clickRate = normaliseRate(rec.ClickRate);
+
+        totalDelivered += delivered;
+        totalSent += sent;
+
+        if (openRate !== null) {
+          weightedOpenSum += openRate * delivered;
+        }
+        if (clickRate !== null) {
+          weightedClickSum += clickRate * delivered;
+        }
+      });
+
+      const avgOpenRate =
+        totalDelivered > 0 ? (weightedOpenSum / totalDelivered) * 100 : null;
+      const avgClickRate =
+        totalDelivered > 0 ? (weightedClickSum / totalDelivered) * 100 : null;
+
+      return {
+        totalDelivered,
+        totalSent,
+        avgOpenRate,
+        avgClickRate,
+        bulletinCount: records.length,
+      };
+    }
+
+    function updateKpis(aggregates) {
+      const { totalDelivered, bulletinCount, avgOpenRate, avgClickRate } =
+        aggregates;
+
+      kpiBulletins.textContent = bulletinCount ? formatNumber(bulletinCount) : "0";
+      kpiDelivered.textContent = formatNumber(totalDelivered);
+      kpiOpenRate.textContent =
+        avgOpenRate !== null ? formatPercent(avgOpenRate) : "–";
+      kpiClickRate.textContent =
+        avgClickRate !== null ? formatPercent(avgClickRate) : "–";
+    }
+
+    function updateRatesChart(records) {
+      const ctx = document.getElementById("ratesChart").getContext("2d");
+      if (ratesChart) ratesChart.destroy();
+
+      if (!records.length) {
+        ratesChart = new Chart(ctx, {
+          type: "line",
+          data: { labels: ["No data"], datasets: [{ data: [0] }] },
+          options: { plugins: { legend: { display: false } } },
+        });
+        return;
+      }
+
+      const sorted = [...records].sort((a, b) => {
+        const daDate = parseSentAtDate(a.SentAt || a.createdTime) || new Date(a.createdTime);
+        const dbDate = parseSentAtDate(b.SentAt || b.createdTime) || new Date(b.createdTime);
+        const da = daDate && !isNaN(daDate.getTime()) ? daDate.getTime() : 0;
+        const db = dbDate && !isNaN(dbDate.getTime()) ? dbDate.getTime() : 0;
+        return da - db;
+      });
+
+      const labels = sorted.map((r) =>
+        formatDate(r.SentAt || r.createdTime)
+      );
+      const openData = sorted.map((r) => {
+        const rate = normaliseRate(r.OpenRate);
+        return rate !== null ? rate * 100 : null;
+      });
+      const clickData = sorted.map((r) => {
+        const rate = normaliseRate(r.ClickRate);
+        return rate !== null ? rate * 100 : null;
+      });
+
+      ratesChart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "Open rate (%)",
+              data: openData,
+            },
+            {
+              label: "Click rate (%)",
+              data: clickData,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: (value) => `${value}%`,
+              },
+            },
+          },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: (context) =>
+                  `${context.dataset.label}: ${context.parsed.y.toFixed(
+                    1
+                  )}%`,
+              },
+            },
+          },
+        },
+      });
+    }
+
+    function shortenUrlLabel(url) {
+  try {
+    const u = new URL(url);
+    const host = u.hostname.replace(/^www\./, "");
+    const path = u.pathname.replace(/\/$/, "");
+    const full = `${host}${path}`;
+    return full.length > 42 ? full.slice(0, 39) + "…" : full || host;
+  } catch {
+    return url && url.length > 42 ? url.slice(0, 39) + "…" : url || "(no URL)";
+  }
+}
+
+function extractDomain(url) {
+  try {
+    const u = new URL(url);
+    return u.hostname.replace(/^www\./, "");
+  } catch {
+    return "other";
+  }
+}
+
+function updateTopLinksChart(links) {
+  const ctx = document.getElementById("topLinksChart").getContext("2d");
+  if (topLinksChart) topLinksChart.destroy();
+
+  if (!links.length) {
+    topLinksChart = new Chart(ctx, {
+      type: "bar",
+      data: { labels: ["No data"], datasets: [{ data: [0] }] },
+      options: { plugins: { legend: { display: false } } },
+    });
+    return;
+  }
+
+  const sorted = [...links].sort(
+    (a, b) => (b.UniqueClicks || 0) - (a.UniqueClicks || 0)
+  );
+  const top = sorted.slice(0, 7);
+  const labels = top.map((l) => shortenUrlLabel(l.URL || "(no URL)"));
+  const data = top.map((l) => l.UniqueClicks || 0);
+  const rawUrls = top.map((l) => l.URL || "");
+
+  topLinksChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Unique clicks",
+          data,
+        },
+      ],
+    },
+    options: {
+      indexAxis: "y",
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: (items) => {
+              const idx = items[0].dataIndex;
+              return rawUrls[idx] || labels[idx];
+            },
+            label: (context) =>
+              `${context.parsed.x.toLocaleString("en-GB")} unique clicks`,
+          },
+        },
+      },
+      scales: {
+        x: {
+          beginAtZero: true,
+          ticks: { precision: 0 },
+        },
+        y: {
+          ticks: {
+            font: { size: 10 },
+          },
+        },
+      },
+    },
+  });
+}
+
+function updateDomainsChart(links) {
+    const ctx = document.getElementById("domainsChart").getContext("2d");
+    if (domainsChart) domainsChart.destroy();
+
+    if (!links.length) {
+      domainsChart = new Chart(ctx, {
+        type: "doughnut",
+        data: { labels: ["No data"], datasets: [{ data: [1] }] },
+        options: { plugins: { legend: { display: false } } },
+      });
+      return;
+    }
+
+    const totalsByDomain = {};
+    links.forEach((l) => {
+      const domain = extractDomain(l.URL || "");
+      const clicks = l.UniqueClicks || 0;
+      totalsByDomain[domain] = (totalsByDomain[domain] || 0) + clicks;
+    });
+
+    const entries = Object.entries(totalsByDomain).sort(
+      (a, b) => b[1] - a[1]
+    );
+    const labels = entries.map(([domain]) => domain);
+    const data = entries.map(([, clicks]) => clicks);
+
+    domainsChart = new Chart(ctx, {
+      type: "doughnut",
+      data: {
+        labels,
+        datasets: [
+          {
+            data,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: "bottom",
+            labels: {
+              boxWidth: 10,
+              font: { size: 10 },
+            },
+          },
+          tooltip: {
+            callbacks: {
+              label: (context) =>
+                `${context.label}: ${context.parsed.toLocaleString(
+                  "en-GB"
+                )} unique clicks`,
+            },
+          },
+        },
+      },
+    });
+  }
+
+    function updateTopBulletinsChart(records) {
+      const ctx = document
+        .getElementById("topBulletinsChart")
+        .getContext("2d");
+      if (topBulletinsChart) topBulletinsChart.destroy();
+
+      if (!records.length) {
+        topBulletinsChart = new Chart(ctx, {
+          type: "bar",
+          data: { labels: ["No data"], datasets: [{ data: [0] }] },
+          options: { plugins: { legend: { display: false } } },
+        });
+        return;
+      }
+
+      const sorted = [...records].sort(
+        (a, b) => (b.UniqueClicks || 0) - (a.UniqueClicks || 0)
+      );
+      const top = sorted.slice(0, 7);
+      const labels = top.map((r) => r.Name || "(untitled)");
+      const data = top.map((r) => r.UniqueClicks || 0);
+      const dates = top.map((r) => r.SentAt || r.createdTime);
+
+      topBulletinsChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "Unique clicks",
+              data,
+            },
+          ],
+        },
+        options: {
+          indexAxis: "y",
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                title: (items) => {
+                  const idx = items[0].dataIndex;
+                  const name = labels[idx] || "(untitled)";
+                  const dateLabel = formatDate(dates[idx]);
+                  return `${name} – ${dateLabel}`;
+                },
+                label: (context) =>
+                  `${context.parsed.x.toLocaleString("en-GB")} unique clicks`,
+              },
+            },
+          },
+          scales: {
+            x: {
+              beginAtZero: true,
+              ticks: { precision: 0 },
+            },
+            y: {
+              ticks: {
+                font: { size: 10 },
+              },
+            },
+          },
+        },
+      });
+    }
+
+    function updateTable(records) {
+      if (!records.length) {
+        bulletinsTableBody.innerHTML =
+          '<tr><td colspan="9" class="muted">No bulletins found for this period.</td></tr>';
+        return;
+      }
+
+      const sorted = [...records].sort((a, b) => {
+        const daDate = parseSentAtDate(a.SentAt || a.createdTime) || new Date(a.createdTime);
+        const dbDate = parseSentAtDate(b.SentAt || b.createdTime) || new Date(b.createdTime);
+        const da = daDate && !isNaN(daDate.getTime()) ? daDate.getTime() : 0;
+        const db = dbDate && !isNaN(dbDate.getTime()) ? dbDate.getTime() : 0;
+        return db - da;
+      });
+
+      bulletinsTableBody.innerHTML = sorted
+        .map((r) => {
+          const delivered =
+            typeof r.Delivered === "number" ? r.Delivered : r.TotalSent || 0;
+          const openRate = normaliseRate(r.OpenRate);
+          const clickRate = normaliseRate(r.ClickRate);
+
+          return `
+          <tr>
+            <td>${formatDate(r.SentAt || r.createdTime)}</td>
+            <td class="td-name" title="${(r.Name || "").replace(/"/g, "&quot;")}">
+              ${r.Name || "–"}
+            </td>
+            <td>${formatNumber(delivered)}</td>
+            <td>${openRate !== null ? formatPercent(openRate * 100) : "–"}</td>
+            <td>${clickRate !== null ? formatPercent(clickRate * 100) : "–"}</td>
+            <td>${formatNumber(r.UniqueOpens)}</td>
+            <td>${formatNumber(r.UniqueClicks)}</td>
+            <td>${formatNumber(r.TotalClicks)}</td>
+            <td>${formatNumber(r.NumLinks)}</td>
+          </tr>
+        `;
+        })
+        .join("");
+    }
+
+    function updateInsights(records, aggregates) {
+      const { totalDelivered, avgOpenRate, avgClickRate } = aggregates;
+
+      if (!records.length || !totalDelivered) {
+        insightsList.innerHTML =
+          '<li class="muted">Once you import one or more bulletin reports, this panel will summarise how your email performance is trending.</li>';
+        return;
+      }
+
+      const copyItems = [];
+
+      const totalUniqueClicks = records.reduce(
+        (sum, r) => sum + (r.UniqueClicks || 0),
+        0
+      );
+      const totalUniqueOpens = records.reduce(
+        (sum, r) => sum + (r.UniqueOpens || 0),
+        0
+      );
+
+      if (avgOpenRate !== null) {
+        copyItems.push(
+          `<li>Across the selected period, bulletins achieved an average <strong>open rate of ${formatPercent(
+            avgOpenRate
+          )}</strong>, based on ${formatNumber(
+            totalDelivered
+          )} delivered emails.</li>`
+        );
+      }
+
+      if (avgClickRate !== null) {
+        copyItems.push(
+          `<li>The average <strong>click rate</strong> was ${formatPercent(
+            avgClickRate
+          )}, with around ${formatNumber(
+            totalUniqueClicks
+          )} unique clicks across all bulletins.</li>`
+        );
+      }
+
+      const sortedByClicks = [...records].sort(
+        (a, b) => (b.UniqueClicks || 0) - (a.UniqueClicks || 0)
+      );
+      if (sortedByClicks.length) {
+        const top = sortedByClicks[0];
+        if (top.UniqueClicks) {
+          copyItems.push(
+            `<li>The strongest-performing bulletin for click-throughs was <strong>${
+              top.Name || "(untitled)"
+            }</strong>, generating ${formatNumber(
+              top.UniqueClicks
+            )} unique clicks.</li>`
+          );
+        }
+      }
+
+      if (totalUniqueOpens && totalUniqueClicks) {
+        const clickPerOpener = totalUniqueClicks / totalUniqueOpens;
+        copyItems.push(
+          `<li>On average, each opener clicked <strong>${clickPerOpener.toFixed(
+            2
+          )}</strong> links. This can help indicate how engaging your content mix is once people open.</li>`
+        );
+      }
+
+      copyItems.push(
+        `<li class="muted">These figures are based on imported Granicus Bulletin Detail Reports and will update as you add new bulletins.</li>`
+      );
+
+      insightsList.innerHTML = copyItems.join("");
+    }
+
+    async function fetchAllLinks() {
+  let records = [];
+  let offset = null;
+
+  try {
+    do {
+      const url = new URL(airtableLinksUrl);
+      url.searchParams.set("pageSize", "100");
+      if (offset) {
+        url.searchParams.set("offset", offset);
+      }
+
+      const res = await fetch(url.toString(), {
+        headers: {
+          Authorization: `Bearer ${airtableApiKey}`,
+        },
+      });
+
+      if (!res.ok) {
+        let errText = `Request failed with status ${res.status}`;
+        try {
+          const err = await res.json();
+          if (err && err.error && err.error.message) {
+            errText = `Airtable error: ${err.error.message}`;
+          }
+        } catch (e) {}
+        throw new Error(errText);
+      }
+
+      const data = await res.json();
+      if (Array.isArray(data.records)) {
+        records = records.concat(
+          data.records.map((rec) => ({
+            id: rec.id,
+            createdTime: rec.createdTime,
+            ...(rec.fields || {}),
+          }))
+        );
+      }
+      offset = data.offset;
+    } while (offset);
+
+    return records;
+  } catch (err) {
+    console.error("Error fetching Airtable links", err);
+    return [];
+  }
+}
+
+    async function fetchAllBulletins() {
+      let records = [];
+      let offset = null;
+
+      try {
+        do {
+          const url = new URL(airtableUrl);
+          url.searchParams.set("pageSize", "100");
+          if (offset) {
+            url.searchParams.set("offset", offset);
+          }
+
+          const res = await fetch(url.toString(), {
+            headers: {
+              Authorization: `Bearer ${airtableApiKey}`,
+            },
+          });
+
+          if (!res.ok) {
+            let errText = `Request failed with status ${res.status}`;
+            try {
+              const err = await res.json();
+              if (err && err.error && err.error.message) {
+                errText = `Airtable error: ${err.error.message}`;
+              }
+            } catch (e) {
+              // ignore parse errors
+            }
+            throw new Error(errText);
+          }
+
+          const data = await res.json();
+          if (Array.isArray(data.records)) {
+            records = records.concat(
+              data.records.map((rec) => ({
+                id: rec.id,
+                createdTime: rec.createdTime,
+                ...(rec.fields || {}),
+              }))
+            );
+          }
+          offset = data.offset;
+        } while (offset);
+
+        return records;
+      } catch (err) {
+        console.error("Error fetching Airtable bulletins", err);
+        statusBar.textContent =
+          err.message || "Unable to load bulletins from Airtable.";
+        return [];
+      }
+    }
+
+    function recompute() {
+      const filteredBulletins = applyDateFilter(allBulletins);
+      updateStatus(filteredBulletins);
+      const aggregates = computeAggregates(filteredBulletins);
+      updateKpis(aggregates);
+      updateRatesChart(filteredBulletins);
+      updateTopBulletinsChart(filteredBulletins);
+      updateTable(filteredBulletins);
+      updateInsights(filteredBulletins, aggregates);
+
+      // Match links to bulletins currently in view
+      const bulletinIdsInView = new Set(filteredBulletins.map((b) => b.id));
+      const filteredLinks = allLinks.filter((link) => {
+        if (!Array.isArray(link.Bulletin)) return false;
+        return link.Bulletin.some((id) => bulletinIdsInView.has(id));
+      });
+
+      updateTopLinksChart(filteredLinks);
+      updateDomainsChart(filteredLinks);
+    }
+
+    async function initDashboard() {
+      statusBar.textContent = "Loading bulletins from Airtable…";
+
+      const [bulletinRecords, linkRecords] = await Promise.all([
+        fetchAllBulletins(),
+        fetchAllLinks(),
+      ]);
+      allBulletins = bulletinRecords;
+      allLinks = linkRecords;
+
+      if (!bulletinRecords.length) {
+        statusBar.textContent =
+          "No GranicusBulletins records found. Import at least one Bulletin Detail Report first.";
+        kpiBulletins.textContent = "0";
+        kpiDelivered.textContent = "0";
+        kpiOpenRate.textContent = "–";
+        kpiClickRate.textContent = "–";
+        bulletinsTableBody.innerHTML =
+          '<tr><td colspan="9" class="muted">No data yet. Once you import bulletin reports, they will appear here.</td></tr>';
+        updateTopLinksChart([]);
+        updateDomainsChart([]);
+        return;
+      }
+
+      recompute();
+      statusBar.textContent =
+        "Snapshot ready. Use this page for quick email performance updates and leadership slides.";
+    }
+
+    dateRangeFilter.addEventListener("change", recompute);
+    if (audienceFilter) {
+      audienceFilter.addEventListener("change", recompute);
+    }
+
+    initDashboard();
+  </script>
+</body>
+</html>

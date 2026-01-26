@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Campaign Results – Kirklees UTM Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      --bg: #e4e4e4;
+      --card: #ffffff;
+      --accent: #008491;
+      --accent-2: #6b1b78;
+      --text-main: #0f172a;
+      --text-secondary: #64748b;
+      --shadow: 0 18px 46px rgba(13, 34, 64, 0.18);
+      --border: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(0, 132, 145, 0.12), transparent 32%),
+        radial-gradient(circle at 80% 10%, rgba(107, 27, 120, 0.12), transparent 28%),
+        var(--bg);
+      padding: 24px 12px 32px;
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+    }
+
+    .shell {
+      width: min(1200px, 100%);
+      background: var(--card);
+      border-radius: 22px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(15, 23, 42, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .subtitle {
+      margin: 4px 0 0;
+      font-size: 13px;
+      opacity: 0.7;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: flex-end;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    select {
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      background: white;
+      color: var(--text-main);
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    select:hover {
+      border-color: var(--accent);
+    }
+
+    .snapshot-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .kpi-card {
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .kpi-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .kpi-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .kpi-secondary {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin: 24px 0 16px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .chart-container {
+      position: relative;
+      height: 300px;
+      margin: 20px 0;
+    }
+
+    .top-links-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+    }
+
+    .top-links-table th {
+      background: #f8fafc;
+      padding: 12px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      border-bottom: 2px solid var(--border);
+    }
+
+    .top-links-table td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+
+    .top-links-table tr:hover {
+      background: #f8fafc;
+    }
+
+    .link-url {
+      color: var(--accent);
+      text-decoration: none;
+      word-break: break-all;
+      max-width: 300px;
+    }
+
+    .link-url:hover {
+      text-decoration: underline;
+    }
+
+    .click-count {
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .info-box {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-left: 4px solid var(--accent);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #166534;
+    }
+
+    .meta-info {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 8px;
+    }
+
+    @media (max-width: 768px) {
+      .shell {
+        padding: 16px;
+      }
+
+      h1 {
+        font-size: 20px;
+      }
+
+      .snapshot-container {
+        grid-template-columns: 1fr;
+      }
+
+      .chart-container {
+        height: 250px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <!-- Header -->
+    <div>
+      <div class="header-row">
+        <div>
+          <h1>Campaign Results</h1>
+          <p class="subtitle">Email campaign performance snapshot & trends</p>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filters">
+        <div class="filter-group">
+          <label>Campaign</label>
+          <select id="campaignFilter" onchange="updateDashboard()">
+            <option value="">Select a campaign...</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Performance Snapshot -->
+    <div id="snapshotContainer" style="display:none;">
+      <div class="section-title">📊 Campaign Snapshot</div>
+
+      <div class="snapshot-container">
+        <div class="kpi-card">
+          <div class="kpi-label">Sent</div>
+          <div class="kpi-value" id="kpiSent">—</div>
+          <div class="kpi-secondary" id="kpiDeliveredRate">—</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-label">Opens</div>
+          <div class="kpi-value" id="kpiOpenRate">—</div>
+          <div class="kpi-secondary" id="kpiOpenCount">—</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-label">Click Rate</div>
+          <div class="kpi-value" id="kpiClickRate">—</div>
+          <div class="kpi-secondary" id="kpiClickCount">—</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-label">Sent Date</div>
+          <div class="kpi-value" id="kpiDate" style="font-size: 16px;">—</div>
+          <div class="kpi-secondary" id="kpiSentBy">—</div>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <strong>How to read this:</strong> This shows the performance of the selected campaign. Open Rate tells you what % of recipients opened the email. Click Rate tells you what % clicked a link. Compare these to previous weeks to spot trends.
+      </div>
+    </div>
+
+    <!-- Trend Chart -->
+    <div id="trendContainer" style="display:none;">
+      <div class="section-title">📈 5-Week Trend</div>
+      <div class="chart-container">
+        <canvas id="trendChart"></canvas>
+      </div>
+      <div class="meta-info">
+        Shows engagement trend across the last 5 campaigns. Higher lines = better performance. Use this to spot whether recent campaigns are improving or declining.
+      </div>
+    </div>
+
+    <!-- Top Links -->
+    <div id="topLinksContainer" style="display:none;">
+      <div class="section-title">🔗 Top Links from This Campaign</div>
+      <table class="top-links-table">
+        <thead>
+          <tr>
+            <th>Link</th>
+            <th style="width: 100px;">Unique Clicks</th>
+            <th style="width: 100px;">Total Clicks</th>
+          </tr>
+        </thead>
+        <tbody id="topLinksBody">
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Empty State -->
+    <div id="emptyState" style="text-align: center; padding: 40px 20px;">
+      <p style="color: var(--text-secondary); font-size: 16px;">👆 Select a campaign above to view results</p>
+    </div>
+  </div>
+
+  <script>
+    // Sample data from the 5 bulletins
+    const bulletins = [
+      {
+        id: 1,
+        name: "Kirklees Together – 16 Jan 2026",
+        sent: "2026-01-16",
+        sentBy: "Huzafa.Bismillah@kirklees.gov.uk",
+        totalSent: 17611,
+        delivered: 17345,
+        uniqueOpens: 7859,
+        openRate: 45,
+        totalClicks: 2101,
+        uniqueClicks: 1998,
+        clickRate: 12,
+        links: [
+          { url: "Cabinet approves bold new proposal for Huddersfield regeneration", uniqueClicks: 678, totalClicks: 719 },
+          { url: "Cabinet approves trial of moving traffic enforcement in Kirklees", uniqueClicks: 644, totalClicks: 669 },
+          { url: "Cabinet approves next stage for Woodley School College", uniqueClicks: 431, totalClicks: 450 },
+          { url: "Facebook - Live in Kirklees", uniqueClicks: 151, totalClicks: 164 },
+          { url: "Kirklees Together homepage", uniqueClicks: 35, totalClicks: 36 }
+        ]
+      },
+      {
+        id: 2,
+        name: "Weekly News Update – 09 Jan 2026",
+        sent: "2026-01-09",
+        sentBy: "spencer.wilson@kirklees.gov.uk",
+        totalSent: 17628,
+        delivered: 17377,
+        uniqueOpens: 7731,
+        openRate: 44,
+        totalClicks: 1750,
+        uniqueClicks: 1679,
+        clickRate: 10,
+        links: [
+          { url: "Connecting Kirklees: Roadworks update for January 2026", uniqueClicks: 1110, totalClicks: 1156 },
+          { url: "Kirklees roadworks information", uniqueClicks: 213, totalClicks: 217 },
+          { url: "Facebook post – Roadworks", uniqueClicks: 120, totalClicks: 134 },
+          { url: "Festive lunch brings Christmas cheer", uniqueClicks: 112, totalClicks: 118 },
+          { url: "School applications deadline", uniqueClicks: 53, totalClicks: 54 }
+        ]
+      },
+      {
+        id: 3,
+        name: "Weekly News Update – 19 Dec 2025",
+        sent: "2025-12-19",
+        sentBy: "Liam.Senior-Watson@kirklees.gov.uk",
+        totalSent: 17617,
+        delivered: 17341,
+        uniqueOpens: 7600,
+        openRate: 44,
+        totalClicks: 1024,
+        uniqueClicks: 968,
+        clickRate: 6,
+        links: [
+          { url: "Joseph Norton Academy build update", uniqueClicks: 400, totalClicks: 414 },
+          { url: "Huddersfield town centre car park refurbishment", uniqueClicks: 282, totalClicks: 292 },
+          { url: "Christmas tree cycling scheme", uniqueClicks: 148, totalClicks: 174 },
+          { url: "Kirklees Together homepage", uniqueClicks: 40, totalClicks: 43 },
+          { url: "Contact the council", uniqueClicks: 39, totalClicks: 41 }
+        ]
+      },
+      {
+        id: 4,
+        name: "Weekly news bulletin – 12 Dec 2025",
+        sent: "2025-12-12",
+        sentBy: "nicole.cartmell@kirklees.gov.uk",
+        totalSent: 17619,
+        delivered: 17384,
+        uniqueOpens: 7576,
+        openRate: 44,
+        totalClicks: 1721,
+        uniqueClicks: 1474,
+        clickRate: 8,
+        links: [
+          { url: "Christmas bin collections 2025", uniqueClicks: 1116, totalClicks: 1374 },
+          { url: "Tree-mendous effort by scouts", uniqueClicks: 160, totalClicks: 163 },
+          { url: "Tell your stories in motion", uniqueClicks: 90, totalClicks: 94 },
+          { url: "Facebook – Stories", uniqueClicks: 40, totalClicks: 42 },
+          { url: "Kirklees Together homepage", uniqueClicks: 36, totalClicks: 37 }
+        ]
+      },
+      {
+        id: 5,
+        name: "Weekly News Update – 05 Dec 2025",
+        sent: "2025-12-05",
+        sentBy: "max.youell@kirklees.gov.uk",
+        totalSent: 17632,
+        delivered: 17412,
+        uniqueOpens: 7592,
+        openRate: 44,
+        totalClicks: 904,
+        uniqueClicks: 855,
+        clickRate: 5,
+        links: [
+          { url: "Kirklees invites residents to help shape investment plans", uniqueClicks: 239, totalClicks: 262 },
+          { url: "Marsden regeneration plans", uniqueClicks: 226, totalClicks: 244 },
+          { url: "Cultural heart weaves textile heritage", uniqueClicks: 186, totalClicks: 193 },
+          { url: "Major funding for health, wellbeing and digital", uniqueClicks: 127, totalClicks: 132 },
+          { url: "Kirklees Together homepage", uniqueClicks: 33, totalClicks: 34 }
+        ]
+      }
+    ];
+
+    let trendChart = null;
+
+    function formatDate(dateStr) {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-GB', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+    }
+
+    function populateFilter() {
+      const select = document.getElementById('campaignFilter');
+      bulletins.forEach(b => {
+        const option = document.createElement('option');
+        option.value = b.id;
+        option.textContent = b.name;
+        select.appendChild(option);
+      });
+    }
+
+    function updateDashboard() {
+      const campaignId = parseInt(document.getElementById('campaignFilter').value);
+
+      if (!campaignId) {
+        document.getElementById('snapshotContainer').style.display = 'none';
+        document.getElementById('trendContainer').style.display = 'none';
+        document.getElementById('topLinksContainer').style.display = 'none';
+        document.getElementById('emptyState').style.display = 'block';
+        return;
+      }
+
+      document.getElementById('emptyState').style.display = 'none';
+      document.getElementById('snapshotContainer').style.display = 'block';
+      document.getElementById('trendContainer').style.display = 'block';
+      document.getElementById('topLinksContainer').style.display = 'block';
+
+      // Update snapshot
+      const campaign = bulletins.find(b => b.id === campaignId);
+      document.getElementById('kpiSent').textContent = campaign.delivered.toLocaleString();
+      document.getElementById('kpiDeliveredRate').textContent = `${Math.round((campaign.delivered / campaign.totalSent) * 100)}% of ${campaign.totalSent.toLocaleString()} sent`;
+
+      document.getElementById('kpiOpenRate').textContent = `${campaign.openRate}%`;
+      document.getElementById('kpiOpenCount').textContent = `${campaign.uniqueOpens.toLocaleString()} unique opens`;
+
+      document.getElementById('kpiClickRate').textContent = `${campaign.clickRate}%`;
+      document.getElementById('kpiClickCount').textContent = `${campaign.uniqueClicks.toLocaleString()} unique clicks`;
+
+      document.getElementById('kpiDate').textContent = formatDate(campaign.sent);
+      document.getElementById('kpiSentBy').textContent = `Sent by: ${campaign.sentBy.split('@')[0]}`;
+
+      // Update top links
+      const linksBody = document.getElementById('topLinksBody');
+      linksBody.innerHTML = '';
+      campaign.links.slice(0, 5).forEach(link => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${link.url}</td>
+          <td class="click-count">${link.uniqueClicks}</td>
+          <td>${link.totalClicks}</td>
+        `;
+        linksBody.appendChild(row);
+      });
+
+      // Update trend chart
+      updateTrendChart();
+    }
+
+    function updateTrendChart() {
+      const ctx = document.getElementById('trendChart').getContext('2d');
+
+      const dates = bulletins.map(b => new Date(b.sent).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' }));
+      const openRates = bulletins.map(b => b.openRate);
+      const clickRates = bulletins.map(b => b.clickRate);
+
+      if (trendChart) {
+        trendChart.destroy();
+      }
+
+      trendChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: dates,
+          datasets: [
+            {
+              label: 'Open Rate (%)',
+              data: openRates,
+              borderColor: '#008491',
+              backgroundColor: 'rgba(0, 132, 145, 0.1)',
+              borderWidth: 2,
+              pointRadius: 5,
+              pointBackgroundColor: '#008491',
+              pointBorderColor: '#fff',
+              pointBorderWidth: 2,
+              tension: 0.4
+            },
+            {
+              label: 'Click Rate (%)',
+              data: clickRates,
+              borderColor: '#6b1b78',
+              backgroundColor: 'rgba(107, 27, 120, 0.1)',
+              borderWidth: 2,
+              pointRadius: 5,
+              pointBackgroundColor: '#6b1b78',
+              pointBorderColor: '#fff',
+              pointBorderWidth: 2,
+              tension: 0.4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top',
+              labels: {
+                font: { size: 12, weight: 600 },
+                padding: 16,
+                usePointStyle: true
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 50,
+              ticks: {
+                callback: function(value) {
+                  return value + '%';
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Initialize
+    populateFilter();
+  </script>
+</body>
+</html>

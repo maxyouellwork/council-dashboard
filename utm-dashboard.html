@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Kirklees UTM Studio – Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Chart.js for charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      --bg: #e4e4e4;
+      --card: #ffffff;
+      --accent: #008491;
+      --accent-2: #6b1b78;
+      --text-main: #0f172a;
+      --shadow: 0 18px 46px rgba(13, 34, 64, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(0, 132, 145, 0.12), transparent 32%),
+        radial-gradient(circle at 80% 10%, rgba(107, 27, 120, 0.12), transparent 28%),
+        var(--bg);
+      padding: 24px 12px 32px;
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+    }
+
+    .shell {
+      width: min(1080px, 100%);
+      background: var(--card);
+      border-radius: 22px;
+      padding: 18px 18px 20px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(15, 23, 42, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: centre;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .subtitle {
+      margin: 2px 0 0;
+      font-size: 13px;
+      opacity: 0.8;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: centre;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(0, 132, 145, 0.08);
+      font-size: 11px;
+      font-weight: 600;
+      color: #0f172a;
+      white-space: nowrap;
+    }
+
+    .chip-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #16a34a;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: flex-end;
+      margin-top: 8px;
+    }
+
+    .filter-field {
+      display: flex;
+      flex-direction: column;
+      min-width: 140px;
+    }
+
+    .filter-field label {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 3px;
+    }
+
+    select {
+      padding: 7px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(15, 23, 42, 0.18);
+      font-size: 13px;
+      outline: none;
+      background: #ffffff;
+    }
+
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(0, 132, 145, 0.2);
+    }
+
+    .filters button {
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: none;
+      background: rgba(15, 23, 42, 0.9);
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .filters button:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+
+    .status-bar {
+      font-size: 12px;
+      opacity: 0.8;
+      margin-top: 4px;
+    }
+
+    .status-bar strong {
+      font-weight: 600;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 2.2fr 2.1fr;
+      gap: 14px;
+      margin-top: 4px;
+    }
+
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .kpi-card {
+      background: linear-gradient(145deg, #f6f7fb 0%, #edf3f9 100%);
+      border-radius: 14px;
+      padding: 10px 10px 9px;
+      border: 1px solid rgba(15, 23, 42, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-height: 64px;
+    }
+
+    .kpi-label {
+      font-size: 11px;
+      opacity: 0.75;
+    }
+
+    .kpi-value {
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .kpi-footnote {
+      font-size: 10px;
+      opacity: 0.7;
+    }
+
+    .campaign-cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .campaign-card {
+      background: #f6f7fb;
+      border-radius: 12px;
+      padding: 8px 9px;
+      border: 1px solid rgba(15, 23, 42, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .campaign-card-title {
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .campaign-card-metric {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .campaign-card-footnote {
+      font-size: 10px;
+      opacity: 0.7;
+    }
+
+    .panel {
+      background: #f6f7fb;
+      border-radius: 16px;
+      padding: 10px 10px 8px;
+      border: 1px solid rgba(15, 23, 42, 0.06);
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .panel-subtitle {
+      margin: 0;
+      font-size: 11px;
+      opacity: 0.7;
+    }
+
+    .chart-wrapper {
+      position: relative;
+      height: 220px;
+      width: 100%;
+    }
+
+    .chart-wrapper + .chart-wrapper {
+      margin-top: 10px;
+    }
+
+    .table-wrapper {
+      max-height: 260px;
+      overflow: auto;
+      border-radius: 10px;
+      border: 1px solid rgba(15, 23, 42, 0.06);
+      background: #ffffff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+
+    thead {
+      background: #f1f4fb;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    th,
+    td {
+      padding: 6px 8px;
+      text-align: left;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+      white-space: nowrap;
+    }
+
+    th {
+      font-weight: 600;
+      opacity: 0.85;
+      font-size: 11px;
+    }
+
+    tbody tr:nth-child(even) {
+      background: rgba(248, 250, 252, 0.8);
+    }
+
+    .td-title {
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: centre;
+      padding: 1px 6px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 600;
+      background: rgba(0, 132, 145, 0.08);
+    }
+
+    .badge.inactive {
+      background: rgba(148, 163, 184, 0.18);
+    }
+
+    .muted {
+      opacity: 0.7;
+    }
+
+    a.link {
+      color: #0369a1;
+      text-decoration: none;
+    }
+
+    a.link:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .kpi-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .campaign-cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 600px) {
+      .shell {
+        padding: 14px 12px 16px;
+      }
+
+      .kpi-row {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .campaign-cards {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      th,
+      td {
+        white-space: normal;
+      }
+
+      .td-title {
+        max-width: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="header-row">
+      <div>
+        <h1>Kirklees UTM Studio – Dashboard</h1>
+        <p class="subtitle">
+          Overview of links created via kirklees.link, with clicks by campaign, channel and asset.
+        </p>
+      </div>
+      <div class="chip">
+        <span class="chip-dot"></span>
+        Live – reading from Airtable
+      </div>
+    </div>
+
+    <div class="filters">
+      <div class="filter-field">
+        <label for="campaignFilter">Campaign</label>
+        <select id="campaignFilter">
+          <option value="">All campaigns</option>
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label for="channelFilter">Channel</label>
+        <select id="channelFilter">
+          <option value="">All channels</option>
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label for="activeFilter">Status</label>
+        <select id="activeFilter">
+          <option value="all">All links</option>
+          <option value="active">Active only</option>
+          <option value="inactive">Archived only</option>
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label for="dateRangeFilter">Date range</label>
+        <select id="dateRangeFilter">
+          <option value="all">All time</option>
+          <option value="last30">Last 30 days</option>
+        </select>
+      </div>
+
+      <button id="resetFiltersButton" type="button">Reset filters</button>
+    </div>
+
+    <div id="statusBar" class="status-bar">Loading data from Airtable…</div>
+
+    <div class="grid">
+      <div>
+        <div class="kpi-row">
+          <div class="kpi-card">
+            <div class="kpi-label">Total clicks</div>
+            <div id="kpiTotalClicks" class="kpi-value">–</div>
+            <div class="kpi-footnote">Across all filtered links</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Links</div>
+            <div id="kpiLinks" class="kpi-value">–</div>
+            <div class="kpi-footnote">Distinct short URLs</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Campaigns</div>
+            <div id="kpiCampaigns" class="kpi-value">–</div>
+            <div class="kpi-footnote">With at least one link</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Avg clicks per link</div>
+            <div id="kpiAvgClicks" class="kpi-value">–</div>
+            <div class="kpi-footnote">Filtered set only</div>
+          </div>
+        </div>
+
+        <div id="campaignCards" class="campaign-cards">
+          <!-- Top campaigns will be injected here -->
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <p class="panel-title">Top links</p>
+            <p class="panel-subtitle">Sorted by clicks (highest first).</p>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Title / code</th>
+                  <th>Campaign</th>
+                  <th>Channel</th>
+                  <th>Clicks</th>
+                  <th>Short URL</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="linksTableBody">
+                <tr><td colspan="6">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel">
+          <div class="panel-header">
+            <p class="panel-title">Clicks by campaign</p>
+            <p class="panel-subtitle">Based on current filters. Hover for values.</p>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="campaignChart"></canvas>
+          </div>
+          <div class="panel-header" style="margin-top:10px;">
+            <p class="panel-title">Clicks by channel</p>
+            <p class="panel-subtitle">Shows how different channels are performing.</p>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="channelChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script>
+    // ---------------------------
+    // CONFIG – loaded from config.js
+    // ---------------------------
+    const airtableBaseId = window.CONFIG.AIRTABLE_BASE_ID;
+    const airtableTableName = "UTMLinks";
+    const airtableApiKey = window.CONFIG.AIRTABLE_API_KEY;
+
+    const airtableUrl = `https://api.airtable.com/v0/${airtableBaseId}/${encodeURIComponent(
+      airtableTableName
+    )}`;
+
+    const statusBar = document.getElementById("statusBar");
+    const campaignFilter = document.getElementById("campaignFilter");
+    const channelFilter = document.getElementById("channelFilter");
+    const activeFilter = document.getElementById("activeFilter");
+    const dateRangeFilter = document.getElementById("dateRangeFilter");
+    const resetFiltersButton = document.getElementById("resetFiltersButton");
+
+    const kpiTotalClicks = document.getElementById("kpiTotalClicks");
+    const kpiLinks = document.getElementById("kpiLinks");
+    const kpiCampaigns = document.getElementById("kpiCampaigns");
+    const kpiAvgClicks = document.getElementById("kpiAvgClicks");
+    const linksTableBody = document.getElementById("linksTableBody");
+    const campaignCardsContainer = document.getElementById("campaignCards");
+
+    let allRecords = [];
+    let campaignChart;
+    let channelChart;
+
+    function formatNumber(n) {
+      return n.toLocaleString("en-GB");
+    }
+
+    function normaliseString(value) {
+      if (!value) return "";
+      return value.toString().trim();
+    }
+
+    function applyFilters(records) {
+      const campaignVal = campaignFilter.value;
+      const channelVal = channelFilter.value;
+      const activeVal = activeFilter.value;
+      const dateRangeVal = dateRangeFilter.value;
+
+      let thresholdDate = null;
+      if (dateRangeVal === "last30") {
+        const now = new Date();
+        thresholdDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        // zero out time for a cleaner compare
+        thresholdDate.setHours(0, 0, 0, 0);
+      }
+
+      return records.filter((record) => {
+        const fields = record.fields || {};
+        const campaign = normaliseString(fields.Campaign);
+        const channel = normaliseString(fields.Channel);
+        const active = !!fields.Active;
+
+        if (campaignVal && campaign !== campaignVal) return false;
+        if (channelVal && channel !== channelVal) return false;
+
+        if (activeVal === "active" && !active) return false;
+        if (activeVal === "inactive" && active) return false;
+
+        if (thresholdDate) {
+          const rawDate = fields.Date;
+          if (!rawDate) return false;
+          // Airtable date is ISO or YYYY-MM-DD
+          const dateOnly = rawDate.slice(0, 10);
+          const [y, m, d] = dateOnly.split("-");
+          if (!y || !m || !d) return false;
+          const recordDate = new Date(Number(y), Number(m) - 1, Number(d));
+          recordDate.setHours(0, 0, 0, 0);
+          if (recordDate < thresholdDate) return false;
+        }
+
+        return true;
+      });
+    }
+
+    function updateStatusBar(filteredRecords) {
+      const total = allRecords.length;
+      const filtered = filteredRecords.length;
+      const dateLabel = dateRangeFilter.value === "last30" ? "last 30 days" : "all time";
+      statusBar.innerHTML = `<strong>${filtered}</strong> links shown (out of ${total}) for <strong>${dateLabel}</strong>. Filters apply instantly to metrics, charts and table.`;
+    }
+
+    function updateKpis(filteredRecords) {
+      const totalLinks = filteredRecords.length;
+      const totalClicks = filteredRecords.reduce((sum, r) => {
+        const clicks = r.fields && typeof r.fields.Clicks === "number" ? r.fields.Clicks : 0;
+        return sum + clicks;
+      }, 0);
+
+      const campaigns = new Set(
+        filteredRecords
+          .map((r) => normaliseString(r.fields && r.fields.Campaign))
+          .filter((v) => v)
+      );
+
+      const avgClicks = totalLinks ? totalClicks / totalLinks : 0;
+
+      kpiTotalClicks.textContent = totalLinks ? formatNumber(totalClicks) : "0";
+      kpiLinks.textContent = formatNumber(totalLinks);
+      kpiCampaigns.textContent = formatNumber(campaigns.size);
+      kpiAvgClicks.textContent = totalLinks ? avgClicks.toFixed(1) : "0.0";
+    }
+
+    function updateTopCampaignCards(filteredRecords) {
+      const clicksByCampaign = new Map();
+
+      filteredRecords.forEach((record) => {
+        const f = record.fields || {};
+        const campaign = normaliseString(f.Campaign) || "Uncategorised";
+        const clicks = typeof f.Clicks === "number" ? f.Clicks : 0;
+        const current = clicksByCampaign.get(campaign) || { clicks: 0, links: 0 };
+        clicksByCampaign.set(campaign, {
+          clicks: current.clicks + clicks,
+          links: current.links + 1,
+        });
+      });
+
+      const entries = Array.from(clicksByCampaign.entries());
+      if (!entries.length) {
+        campaignCardsContainer.innerHTML = "";
+        return;
+      }
+
+      entries.sort((a, b) => b[1].clicks - a[1].clicks);
+      const top = entries.slice(0, 3);
+
+      const cardsHtml = top
+        .map(([campaign, stats]) => {
+          const avg = stats.links ? stats.clicks / stats.links : 0;
+          return `
+            <div class="campaign-card">
+              <div class="campaign-card-title" title="${campaign}">${campaign}</div>
+              <div class="campaign-card-metric">${formatNumber(stats.clicks)} clicks</div>
+              <div class="campaign-card-footnote">${stats.links} links · avg ${avg.toFixed(1)} / link</div>
+            </div>
+          `;
+        })
+        .join("");
+
+      campaignCardsContainer.innerHTML = cardsHtml;
+    }
+
+    function updateTable(filteredRecords) {
+      if (!filteredRecords.length) {
+        linksTableBody.innerHTML = '<tr><td colspan="6">No links match the current filters.</td></tr>';
+        return;
+      }
+
+      const sorted = [...filteredRecords].sort((a, b) => {
+        const aClicks = (a.fields && typeof a.fields.Clicks === "number") ? a.fields.Clicks : 0;
+        const bClicks = (b.fields && typeof b.fields.Clicks === "number") ? b.fields.Clicks : 0;
+        return bClicks - aClicks;
+      });
+
+      const rows = sorted.map((record) => {
+        const f = record.fields || {};
+        const title = normaliseString(f.Title) || "(no title)";
+        const code = normaliseString(f.Code);
+        const campaign = normaliseString(f.Campaign) || "–";
+        const channel = normaliseString(f.Channel) || "–";
+        const clicks = typeof f.Clicks === "number" ? f.Clicks : 0;
+        const shortUrl = normaliseString(f.ShortURL) || "";
+        const active = !!f.Active;
+
+        const statusBadge = active
+          ? '<span class="badge">Active</span>'
+          : '<span class="badge inactive">Archived</span>';
+
+        const shortUrlCell = shortUrl
+          ? `<a href="${shortUrl}" target="_blank" rel="noopener" class="link">Open</a>`
+          : '<span class="muted">–</span>';
+
+        const codeSuffix = code ? `<span class="muted"> · ${code}</span>` : "";
+
+        return `
+          <tr>
+            <td class="td-title">${title}${codeSuffix}</td>
+            <td>${campaign}</td>
+            <td>${channel}</td>
+            <td>${formatNumber(clicks)}</td>
+            <td>${shortUrlCell}</td>
+            <td>${statusBadge}</td>
+          </tr>
+        `;
+      });
+
+      linksTableBody.innerHTML = rows.join("");
+    }
+
+    function updateCampaignChart(filteredRecords) {
+      const clicksByCampaign = new Map();
+
+      filteredRecords.forEach((record) => {
+        const f = record.fields || {};
+        const campaign = normaliseString(f.Campaign) || "Uncategorised";
+        const clicks = typeof f.Clicks === "number" ? f.Clicks : 0;
+        clicksByCampaign.set(campaign, (clicksByCampaign.get(campaign) || 0) + clicks);
+      });
+
+      const labels = Array.from(clicksByCampaign.keys());
+      const data = Array.from(clicksByCampaign.values());
+      const ctx = document.getElementById("campaignChart").getContext("2d");
+
+      if (campaignChart) {
+        campaignChart.destroy();
+      }
+
+      campaignChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [{
+            label: "Clicks",
+            data,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              ticks: {
+                font: { size: 10 },
+              },
+            },
+            y: {
+              beginAtZero: true,
+              ticks: {
+                precision: 0,
+              },
+            },
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (context) => `${context.parsed.y.toLocaleString("en-GB")} clicks`,
+              },
+            },
+          },
+        },
+      });
+    }
+
+    function updateChannelChart(filteredRecords) {
+      const clicksByChannel = new Map();
+
+      filteredRecords.forEach((record) => {
+        const f = record.fields || {};
+        const channel = normaliseString(f.Channel) || "Uncategorised";
+        const clicks = typeof f.Clicks === "number" ? f.Clicks : 0;
+        clicksByChannel.set(channel, (clicksByChannel.get(channel) || 0) + clicks);
+      });
+
+      const labels = Array.from(clicksByChannel.keys());
+      const data = Array.from(clicksByChannel.values());
+      const ctx = document.getElementById("channelChart").getContext("2d");
+
+      if (channelChart) {
+        channelChart.destroy();
+      }
+
+      channelChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [{
+            label: "Clicks",
+            data,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              ticks: {
+                font: { size: 10 },
+              },
+            },
+            y: {
+              beginAtZero: true,
+              ticks: {
+                precision: 0,
+              },
+            },
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (context) => `${context.parsed.y.toLocaleString("en-GB")} clicks`,
+              },
+            },
+          },
+        },
+      });
+    }
+
+    function populateFilterOptions(records) {
+      const campaigns = new Set();
+      const channels = new Set();
+
+      records.forEach((r) => {
+        const f = r.fields || {};
+        const c = normaliseString(f.Campaign);
+        const ch = normaliseString(f.Channel);
+        if (c) campaigns.add(c);
+        if (ch) channels.add(ch);
+      });
+
+      const sortedCampaigns = Array.from(campaigns).sort((a, b) =>
+        a.localeCompare(b, "en-GB", { sensitivity: "base" })
+      );
+      const sortedChannels = Array.from(channels).sort((a, b) =>
+        a.localeCompare(b, "en-GB", { sensitivity: "base" })
+      );
+
+      campaignFilter.innerHTML =
+        '<option value="">All campaigns</option>' +
+        sortedCampaigns.map((c) => `<option value="${c}">${c}</option>`).join("");
+
+      channelFilter.innerHTML =
+        '<option value="">All channels</option>' +
+        sortedChannels.map((c) => `<option value="${c}">${c}</option>`).join("");
+    }
+
+    function recompute() {
+      const filtered = applyFilters(allRecords);
+      updateStatusBar(filtered);
+      updateKpis(filtered);
+      updateTopCampaignCards(filtered);
+      updateTable(filtered);
+      updateCampaignChart(filtered);
+      updateChannelChart(filtered);
+    }
+
+    async function fetchAllRecords() {
+      let records = [];
+      let offset = null;
+
+      try {
+        do {
+          const url = new URL(airtableUrl);
+          url.searchParams.set("pageSize", "100");
+          if (offset) {
+            url.searchParams.set("offset", offset);
+          }
+
+          const res = await fetch(url.toString(), {
+            headers: {
+              Authorization: `Bearer ${airtableApiKey}`,
+            },
+          });
+
+          if (!res.ok) {
+            let errText = `Request failed with status ${res.status}`;
+            try {
+              const err = await res.json();
+              if (err && err.error && err.error.message) {
+                errText = `Airtable error: ${err.error.message}`;
+              }
+            } catch (e) {
+              // ignore JSON parse errors
+            }
+            throw new Error(errText);
+          }
+
+          const data = await res.json();
+          if (Array.isArray(data.records)) {
+            records = records.concat(data.records);
+          }
+          offset = data.offset;
+        } while (offset);
+
+        return records;
+      } catch (err) {
+        console.error("Error fetching Airtable records", err);
+        statusBar.textContent = err.message || "Unable to load data from Airtable.";
+        return [];
+      }
+    }
+
+    async function initDashboard() {
+      statusBar.textContent = "Loading data from Airtable…";
+
+      const records = await fetchAllRecords();
+      allRecords = records;
+
+      if (!records.length) {
+        statusBar.textContent = "No records found. Create some links in the admin first.";
+        updateKpis([]);
+        updateTopCampaignCards([]);
+        updateTable([]);
+        updateCampaignChart([]);
+        updateChannelChart([]);
+        return;
+      }
+
+      populateFilterOptions(records);
+      recompute();
+
+      statusBar.textContent = "Data loaded. Adjust the filters to explore campaigns, channels and time periods.";
+    }
+
+    campaignFilter.addEventListener("change", recompute);
+    channelFilter.addEventListener("change", recompute);
+    activeFilter.addEventListener("change", recompute);
+    dateRangeFilter.addEventListener("change", recompute);
+
+    resetFiltersButton.addEventListener("click", () => {
+      campaignFilter.value = "";
+      channelFilter.value = "";
+      activeFilter.value = "all";
+      dateRangeFilter.value = "all";
+      recompute();
+    });
+
+    initDashboard();
+  </script>
+</body>
+</html>

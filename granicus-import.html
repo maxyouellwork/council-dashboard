@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Kirklees UTM Studio – Granicus importer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- PDF.js for client-side PDF text extraction -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #e4e4e4;
+      --card: #ffffff;
+      --accent: #008491;
+      --accent-2: #6b1b78;
+      --text-main: #0f172a;
+      --shadow: 0 18px 46px rgba(13, 34, 64, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(0, 132, 145, 0.12), transparent 32%),
+        radial-gradient(circle at 80% 10%, rgba(107, 27, 120, 0.12), transparent 28%),
+        var(--bg);
+      padding: 24px 12px 32px;
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+    }
+
+    .shell {
+      width: min(1100px, 100%);
+      background: var(--card);
+      border-radius: 22px;
+      padding: 18px 18px 20px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(15, 23, 42, 0.06);
+      display: grid;
+      grid-template-columns: 1.2fr 1.4fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .shell {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .subtitle {
+      margin: 0;
+      font-size: 13px;
+      opacity: 0.8;
+    }
+
+    .left {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .right {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    label {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 3px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 220px;
+      resize: vertical;
+      border-radius: 12px;
+      border: 1px solid rgba(15, 23, 42, 0.18);
+      padding: 10px;
+      font-size: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      outline: none;
+    }
+
+    textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(0, 132, 145, 0.2);
+    }
+
+    .file-row {
+      display: flex;
+      align-items: centre;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: none;
+      background: rgba(15, 23, 42, 0.9);
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    button.secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+
+    .status {
+      font-size: 12px;
+      opacity: 0.85;
+    }
+
+    .status strong {
+      font-weight: 600;
+    }
+
+    .card {
+      background: #f6f7fb;
+      border-radius: 16px;
+      padding: 10px 10px 8px;
+      border: 1px solid rgba(15, 23, 42, 0.06);
+    }
+
+    .card-title {
+      margin: 0 0 4px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 4px 10px;
+      font-size: 12px;
+    }
+
+    .meta-label {
+      opacity: 0.7;
+    }
+
+    .meta-value {
+      font-weight: 600;
+    }
+
+    .meta-row {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .links-table-wrapper {
+      max-height: 220px;
+      overflow: auto;
+      border-radius: 10px;
+      border: 1px solid rgba(15, 23, 42, 0.06);
+      background: #ffffff;
+      margin-top: 6px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+
+    thead {
+      background: #f1f4fb;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    th,
+    td {
+      padding: 6px 8px;
+      text-align: left;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+      white-space: nowrap;
+    }
+
+    th {
+      font-weight: 600;
+      opacity: 0.85;
+      font-size: 11px;
+    }
+
+    tbody tr:nth-child(even) {
+      background: rgba(248, 250, 252, 0.8);
+    }
+
+    .td-url {
+      max-width: 260px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .muted {
+      opacity: 0.7;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: centre;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      background: rgba(0, 132, 145, 0.08);
+    }
+
+    .pill-muted {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    input[type="file"] {
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="left">
+      <div>
+        <h1>Granicus bulletin importer</h1>
+        <p class="subtitle">
+          Upload a Granicus Bulletin Detail Report PDF (or paste the text) and we’ll parse the metrics into Airtable.
+        </p>
+      </div>
+
+      <div>
+        <label for="pdfInput">1. Upload Bulletin Detail Report PDF</label>
+        <div class="file-row">
+          <input type="file" id="pdfInput" accept="application/pdf">
+          <span class="pill pill-muted" id="pdfStatus">No file selected</span>
+        </div>
+      </div>
+
+      <div>
+        <label for="rawInput">…or paste the Bulletin Detail Report text</label>
+        <textarea id="rawInput" placeholder="If you prefer, paste the full Bulletin Detail Report text here…"></textarea>
+      </div>
+
+      <div>
+        <label for="seriesSelect">Bulletin name</label>
+        <select id="seriesSelect">
+          <option value="">Select bulletin…</option>
+          <option value="__custom__">Other / custom…</option>
+        </select>
+        <input
+          type="text"
+          id="seriesCustom"
+          placeholder="If “Other”, enter the bulletin name…"
+          style="margin-top:6px; display:none; width:100%; padding:6px 10px; border-radius:10px; border:1px solid rgba(15,23,42,0.18); font-size:12px;"
+        />
+      </div>
+
+      <div>
+        <label for="audienceTypeSelect">Audience type</label>
+        <select id="audienceTypeSelect">
+          <option value="Internal">Internal</option>
+          <option value="External">External</option>
+        </select>
+      </div>
+
+      <div class="buttons">
+        <button id="parseButton" type="button">Parse preview</button>
+        <button id="clearButton" class="secondary" type="button">Clear</button>
+        <button id="saveButton" type="button" disabled>Save to Airtable</button>
+      </div>
+
+      <div id="status" class="status">
+        Upload a PDF or paste the report content, click <strong>Parse preview</strong>, then review before saving.
+      </div>
+    </div>
+
+    <div class="right">
+      <div class="card">
+        <p class="card-title">Bulletin summary</p>
+        <div class="meta-grid" id="metaGrid">
+          <div class="meta-row">
+            <span class="meta-label">Subject</span>
+            <span class="meta-value" id="metaSubject">–</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">Bulletin name</span>
+            <span class="meta-value" id="metaSeriesName">–</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">Sent</span>
+            <span class="meta-value" id="metaSent">–</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">Audience</span>
+            <span class="meta-value" id="metaAudience">–</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">Audience type</span>
+            <span class="meta-value" id="metaAudienceType">–</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">Total sent</span>
+            <span class="meta-value" id="metaTotalSent">–</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">Delivered</span>
+            <span class="meta-value" id="metaDelivered">–</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">Bounced</span>
+            <span class="meta-value" id="metaBounced">–</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">Open rate</span>
+            <span class="meta-value" id="metaOpenRate">–</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">Click rate</span>
+            <span class="meta-value" id="metaClickRate">–</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">Unique opens</span>
+            <span class="meta-value" id="metaUniqueOpens">–</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">Unique clicks</span>
+            <span class="meta-value" id="metaUniqueClicks">–</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">Total opens</span>
+            <span class="meta-value" id="metaTotalOpens">–</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">Total clicks</span>
+            <span class="meta-value" id="metaTotalClicks">–</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">Links in bulletin</span>
+            <span class="meta-value" id="metaNumLinks">–</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">
+          <p class="card-title">Per-link clicks</p>
+          <span id="linksBadge" class="pill muted">No links parsed yet</span>
+        </div>
+        <div class="links-table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>URL</th>
+                <th>Unique clicks</th>
+                <th>Total clicks</th>
+              </tr>
+            </thead>
+            <tbody id="linksTableBody">
+              <tr><td colspan="3" class="muted">No data yet. Upload a PDF or paste a report, then click “Parse preview”.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script>
+    // Configure PDF.js worker
+    if (window["pdfjsLib"]) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
+    }
+
+    // ---------------------------
+    // Airtable config – loaded from config.js
+    // ---------------------------
+    const airtableBaseId = window.CONFIG.AIRTABLE_BASE_ID;
+    const airtableApiKey = window.CONFIG.AIRTABLE_API_KEY;
+    const airtableBulletinsTable = "GranicusBulletins";
+    const airtableLinksTable = "GranicusLinks";
+
+    const airtableBulletinsUrl = `https://api.airtable.com/v0/${airtableBaseId}/${encodeURIComponent(
+      airtableBulletinsTable
+    )}`;
+    const airtableLinksUrl = `https://api.airtable.com/v0/${airtableBaseId}/${encodeURIComponent(
+      airtableLinksTable
+    )}`;
+
+    const pdfInput = document.getElementById("pdfInput");
+    const pdfStatus = document.getElementById("pdfStatus");
+    const rawInput = document.getElementById("rawInput");
+    const parseButton = document.getElementById("parseButton");
+    const clearButton = document.getElementById("clearButton");
+    const saveButton = document.getElementById("saveButton");
+    const statusEl = document.getElementById("status");
+    const seriesSelect = document.getElementById("seriesSelect");
+    const seriesCustomInput = document.getElementById("seriesCustom");
+    const audienceTypeSelect = document.getElementById("audienceTypeSelect");
+
+    const meta = {
+      subject: document.getElementById("metaSubject"),
+      sent: document.getElementById("metaSent"),
+      audience: document.getElementById("metaAudience"),
+      bulletinName: document.getElementById("metaSeriesName"),
+      audienceType: document.getElementById("metaAudienceType"),
+      totalSent: document.getElementById("metaTotalSent"),
+      delivered: document.getElementById("metaDelivered"),
+      bounced: document.getElementById("metaBounced"),
+      openRate: document.getElementById("metaOpenRate"),
+      clickRate: document.getElementById("metaClickRate"),
+      uniqueOpens: document.getElementById("metaUniqueOpens"),
+      uniqueClicks: document.getElementById("metaUniqueClicks"),
+      totalOpens: document.getElementById("metaTotalOpens"),
+      totalClicks: document.getElementById("metaTotalClicks"),
+      numLinks: document.getElementById("metaNumLinks"),
+    };
+
+    const linksTableBody = document.getElementById("linksTableBody");
+    const linksBadge = document.getElementById("linksBadge");
+
+    let parsedBulletin = null; // { fields, links: [] }
+
+    function resetPreview() {
+      Object.values(meta).forEach((el) => (el.textContent = "–"));
+      linksTableBody.innerHTML =
+        '<tr><td colspan="3" class="muted">No data yet. Upload a PDF or paste a report, then click “Parse preview”.</td></tr>';
+      linksBadge.textContent = "No links parsed yet";
+      linksBadge.classList.add("muted");
+      parsedBulletin = null;
+      saveButton.disabled = true;
+      if (meta.bulletinName) meta.bulletinName.textContent = "–";
+      if (meta.audienceType) meta.audienceType.textContent = "–";
+      if (seriesSelect) {
+        seriesSelect.value = "";
+      }
+      if (seriesCustomInput) {
+        seriesCustomInput.value = "";
+        seriesCustomInput.style.display = "none";
+      }
+      if (audienceTypeSelect) {
+        audienceTypeSelect.value = "Internal";
+      }
+    }
+
+    function formatNumber(num) {
+      if (num === null || num === undefined || isNaN(num)) return "–";
+      return Number(num).toLocaleString("en-GB");
+    }
+
+    function getSelectedSeriesName() {
+      if (!seriesSelect) return "";
+      const val = seriesSelect.value;
+      if (val === "__custom__") {
+        return seriesCustomInput ? seriesCustomInput.value.trim() : "";
+      }
+      return val || "";
+    }
+
+    async function loadBulletinNameOptions() {
+      if (!seriesSelect) return;
+
+      // Start with a clean base
+      seriesSelect.innerHTML =
+        '<option value="">Select bulletin…</option>';
+
+      const names = new Set();
+
+      try {
+        let offset = null;
+        do {
+          const url = new URL(airtableBulletinsUrl);
+          url.searchParams.set("pageSize", "50");
+          url.searchParams.append("fields[]", "BulletinName");
+          if (offset) {
+            url.searchParams.set("offset", offset);
+          }
+
+          const res = await fetch(url.toString(), {
+            headers: { Authorization: `Bearer ${airtableApiKey}` },
+          });
+
+          if (!res.ok) {
+            break;
+          }
+
+          const data = await res.json();
+          (data.records || []).forEach((rec) => {
+            const v =
+              rec.fields && typeof rec.fields.BulletinName === "string"
+                ? rec.fields.BulletinName.trim()
+                : "";
+            if (v) names.add(v);
+          });
+
+          offset = data.offset;
+        } while (offset);
+      } catch (e) {
+        console.warn("Could not load bulletin names from Airtable", e);
+      }
+
+      const sorted = Array.from(names).sort((a, b) =>
+        a.localeCompare(b, "en-GB", { sensitivity: "base" })
+      );
+
+      sorted.forEach((name) => {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name;
+        seriesSelect.appendChild(opt);
+      });
+
+      const customOpt = document.createElement("option");
+      customOpt.value = "__custom__";
+      customOpt.textContent = "Other / custom…";
+      seriesSelect.appendChild(customOpt);
+    }
+
+    // Helper to normalise "Sent" date to ISO string
+    function normaliseSentAt(raw) {
+      if (!raw) return null;
+      const str = String(raw).trim();
+
+      // Try native Date parsing first (in case it's already ISO or a full timestamp)
+      const direct = new Date(str);
+      if (!isNaN(direct.getTime())) {
+        return direct.toISOString();
+      }
+
+      // Match things like:
+      // 05-12-2025 06:05 PM GMT  (PDF export, uses d-m-y with "-")
+      // 12/5/2025 7:05pm         (Granicus UI, uses m/d/y with "/")
+      const m = str.match(/(\d{1,2})([\/-])(\d{1,2})[\/-](\d{4})\s+(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+      if (!m) return null;
+
+      let part1 = parseInt(m[1], 10);
+      const sep = m[2];
+      let part2 = parseInt(m[3], 10);
+      const year = parseInt(m[4], 10);
+      let hour = parseInt(m[5], 10);
+      const minute = parseInt(m[6], 10);
+      const ampm = m[7] ? m[7].toUpperCase() : null;
+
+      let day, month;
+      if (sep === "-") {
+        // PDF style: DD-MM-YYYY
+        day = part1;
+        month = part2;
+      } else {
+        // Granicus UI style: MM/DD/YYYY
+        month = part1;
+        day = part2;
+      }
+
+      if (ampm) {
+        if (ampm === "PM" && hour < 12) hour += 12;
+        if (ampm === "AM" && hour === 12) hour = 0;
+      }
+
+      const date = new Date(Date.UTC(year, month - 1, day, hour, minute, 0));
+      if (isNaN(date.getTime())) return null;
+      return date.toISOString();
+    }
+
+    function parseReportText(text) {
+      // Work with a normalised single-string version for the headline metrics
+      const normalised = text.replace(/\s+/g, " ").trim();
+
+      const getMatch = (regex) => {
+        const m = normalised.match(regex);
+        return m ? m[1] : null;
+      };
+
+      const parseNum = (str) => {
+        if (!str) return null;
+        const cleaned = str.replace(/,/g, "");
+        const n = Number(cleaned);
+        return isNaN(n) ? null : n;
+      };
+
+      // Headline details
+      const subject = getMatch(/Subject:\s*(.+?)\s+Sent:/i);
+      const sentRaw = getMatch(/Sent:\s*(.+?)\s+Sent By:/i);
+      const sentIso = normaliseSentAt(sentRaw);
+      const audience = getMatch(/Sent To:\s*(.+?)\s+\d[\d,]*\s+Recipients/i);
+
+      // Delivery stats block: "17,632   Total Sent  17,412 (99%)   Delivered  0 (0%)   Pending  220 (1%)   Bounced"
+      const totalSent = parseNum(getMatch(/Total Sent\s+([\d,]+)/i));
+      const delivered = parseNum(getMatch(/Delivered\s+([\d,]+)\s*\(/i));
+      // Bounced can appear as "220 (1%)   Bounced" so grab the number before the word,
+      // and fall back to "Bounced 220" if the first pattern is not present.
+      const bounced =
+        parseNum(getMatch(/([\d,]+)\s*\([^)]*\)\s*Bounced/i)) ??
+        parseNum(getMatch(/Bounced\s+([\d,]+)/i));
+
+      // Rates: look explicitly for the Open/Click rate phrases, ignoring Delivered %
+      const openRateStr = getMatch(/(\d+(\.\d+)?)%\s*Open Rate/i);
+      const clickRateStr = getMatch(/(\d+(\.\d+)?)%\s*Click Rate/i);
+      const openRate = openRateStr != null ? Number(openRateStr) : null;
+      const clickRate = clickRateStr != null ? Number(clickRateStr) : null;
+
+      // Metrics – Details block: "10,491   Total Opens  7322 (42%)   Unique Opens  821   Total Clicks  781 (4%)   Unique Clicks  12   # of Links"
+      const totalOpens = parseNum(getMatch(/Total Opens\s+([\d,]+)/i));
+      const uniqueOpens = parseNum(getMatch(/Unique Opens\s+([\d,]+)/i));
+
+      // In the PDF this appears as: "821   Total Clicks  781 (4%)   Unique Clicks  12   # of Links"
+      // So we want:
+      //   totalClicks  = 821   (number immediately before "Total Clicks")
+      //   uniqueClicks = 781   (number immediately before "(4%)   Unique Clicks")
+      //   numLinks     = 12    (number immediately before "# of Links")
+      const totalClicks =
+        parseNum(getMatch(/([\d,]+)\s+Total Clicks/i)) ??
+        parseNum(getMatch(/Total Clicks\s+([\d,]+)/i));
+
+      const uniqueClicks =
+        parseNum(getMatch(/([\d,]+)\s*\([^)]*\)\s*Unique Clicks/i)) ??
+        parseNum(getMatch(/Unique Clicks\s+([\d,]+)/i));
+
+      const numLinksSummary =
+        parseNum(getMatch(/([\d,]+)\s*# of Links/i)) ??
+        parseNum(getMatch(/# of Links\s+([\d,]+)/i));
+
+      // ----------------------------
+      // Per-link section parsing (robust version)
+      // ----------------------------
+      const links = [];
+
+      // Capture everything after the "Link URL   Unique Clicks   Total Clicks" header
+      const linksSectionMatch = normalised.match(/Link URL\s+Unique Clicks\s+Total Clicks\s+(.+)/i);
+      if (linksSectionMatch) {
+        const section = linksSectionMatch[1];
+
+        // Find the start index of every "http" URL occurrence
+        const starts = [];
+        const startRegex = /https?:\/\/[^\s]+/g;
+        let m;
+        while ((m = startRegex.exec(section)) !== null) {
+          starts.push(m.index);
+        }
+
+        for (let i = 0; i < starts.length; i++) {
+          const start = starts[i];
+          const end = i + 1 < starts.length ? starts[i + 1] : section.length;
+          const chunk = section.slice(start, end).trim();
+          if (!chunk) continue;
+
+          const tokens = chunk.split(/\s+/);
+          if (tokens.length < 3) continue;
+
+          // Find the first purely numeric token – everything before that is part of the URL
+          const firstNumIndex = tokens.findIndex((t) => /^\d+$/.test(t));
+          if (firstNumIndex === -1) continue;
+
+          const urlParts = tokens.slice(0, firstNumIndex);
+          const numberTokens = tokens.slice(firstNumIndex).filter((t) => /^\d+$/.test(t));
+
+          if (numberTokens.length < 2) continue;
+
+          const unique = Number(numberTokens[numberTokens.length - 2].replace(/,/g, ""));
+          const total = Number(numberTokens[numberTokens.length - 1].replace(/,/g, ""));
+          if (isNaN(unique) || isNaN(total)) continue;
+
+          const url = urlParts.join("");
+
+          links.push({
+            URL: url,
+            UniqueClicks: unique,
+            TotalClicks: total,
+          });
+        }
+      }
+
+      return {
+        fields: {
+          Name: subject || "(untitled bulletin)",
+          SentAt: sentIso || sentRaw || "",
+          Audience: audience || "",
+          TotalSent: totalSent,
+          Delivered: delivered || totalSent,
+          Bounced: bounced,
+          OpenRate: openRate,
+          ClickRate: clickRate,
+          UniqueOpens: uniqueOpens,
+          TotalOpens: totalOpens,
+        },
+        // For UI display – keep the original "Sent" text
+        displaySentAt: sentRaw || "",
+        // These are for on-screen preview only, not written to Airtable
+        uniqueClicks,
+        totalClicks,
+        numLinks: numLinksSummary || links.length,
+        links,
+      };
+    }
+
+    function populatePreview(parsed) {
+      const f = parsed.fields;
+
+      meta.subject.textContent = f.Name || "–";
+      meta.sent.textContent = parsed.displaySentAt || "–";
+      meta.audience.textContent = f.Audience || "–";
+      meta.totalSent.textContent = formatNumber(f.TotalSent);
+      meta.delivered.textContent = formatNumber(f.Delivered);
+      meta.bounced.textContent = formatNumber(f.Bounced);
+      meta.openRate.textContent =
+        f.OpenRate != null ? `${f.OpenRate.toFixed(1)}%` : "–";
+      meta.clickRate.textContent =
+        f.ClickRate != null ? `${f.ClickRate.toFixed(1)}%` : "–";
+      meta.uniqueOpens.textContent = formatNumber(f.UniqueOpens);
+      meta.uniqueClicks.textContent = formatNumber(parsed.uniqueClicks);
+      meta.totalOpens.textContent = formatNumber(f.TotalOpens);
+      meta.totalClicks.textContent = formatNumber(parsed.totalClicks);
+      meta.numLinks.textContent = formatNumber(parsed.numLinks);
+      meta.bulletinName.textContent = getSelectedSeriesName() || "–";
+      meta.audienceType.textContent =
+        audienceTypeSelect && audienceTypeSelect.value
+          ? audienceTypeSelect.value
+          : "–";
+
+      if (!parsed.links.length) {
+        linksTableBody.innerHTML =
+          '<tr><td colspan="3" class="muted">No link table detected. Check the PDF/report includes the “Delivery and performance” link list.</td></tr>';
+        linksBadge.textContent = "0 links";
+        linksBadge.classList.add("muted");
+      } else {
+        linksTableBody.innerHTML = parsed.links
+          .map(
+            (link) => `
+          <tr>
+            <td class="td-url" title="${link.URL}">${link.URL}</td>
+            <td>${formatNumber(link.UniqueClicks)}</td>
+            <td>${formatNumber(link.TotalClicks)}</td>
+          </tr>
+        `
+          )
+          .join("");
+        linksBadge.textContent = `${parsed.links.length} links parsed`;
+        linksBadge.classList.remove("muted");
+      }
+    }
+
+    // Helper function to check for existing bulletin (by Name + SentAt)
+    async function findExistingBulletin(fields) {
+      // Treat Name + SentAt as the natural unique key for a bulletin
+      const name = fields.Name || "";
+      const sentAt = fields.SentAt || "";
+
+      if (!name || !sentAt) {
+        return null;
+      }
+
+      const escapeFormulaString = (value) =>
+        "'" + String(value).replace(/'/g, "''") + "'";
+
+      const formula = `AND({Name} = ${escapeFormulaString(
+        name
+      )}, {SentAt} = ${escapeFormulaString(sentAt)})`;
+
+      const url = new URL(airtableBulletinsUrl);
+      url.searchParams.set("filterByFormula", formula);
+      url.searchParams.set("maxRecords", "1");
+
+      try {
+        const res = await fetch(url.toString(), {
+          headers: {
+            Authorization: `Bearer ${airtableApiKey}`,
+          },
+        });
+
+        if (!res.ok) {
+          console.error("Error checking for existing bulletin", res.status);
+          return null;
+        }
+
+        const data = await res.json();
+        if (Array.isArray(data.records) && data.records.length > 0) {
+          return data.records[0];
+        }
+        return null;
+      } catch (err) {
+        console.error("Error during duplicate check", err);
+        return null;
+      }
+    }
+
+    async function saveToAirtable(parsed) {
+      const bulletinName = getSelectedSeriesName();
+      const audienceType =
+        audienceTypeSelect && audienceTypeSelect.value
+          ? audienceTypeSelect.value
+          : "";
+
+      const fieldsToSave = {
+        ...parsed.fields,
+        BulletinName: bulletinName || "",
+        AudienceType: audienceType || "",
+      };
+
+      const existing = await findExistingBulletin(fieldsToSave);
+      if (existing) {
+        const existingName = existing.fields && existing.fields.Name ? existing.fields.Name : parsed.fields.Name;
+        const existingSent = existing.fields && existing.fields.SentAt ? existing.fields.SentAt : parsed.fields.SentAt;
+        statusEl.textContent =
+          `This bulletin already exists in Airtable as “${existingName || "(untitled)"}” (sent ${existingSent || "unknown date"}). No new records were created.`;
+        saveButton.disabled = false;
+        parseButton.disabled = false;
+        return;
+      }
+      statusEl.textContent = "Saving bulletin to Airtable…";
+      saveButton.disabled = true;
+      parseButton.disabled = true;
+
+      try {
+        // 1. Create the bulletin record
+        const resBulletin = await fetch(airtableBulletinsUrl, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${airtableApiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            records: [{ fields: fieldsToSave }],
+          }),
+        });
+
+        if (!resBulletin.ok) {
+          const errText = await resBulletin.text();
+          throw new Error(`Bulletin save failed: ${resBulletin.status} ${errText}`);
+        }
+
+        const bulletinData = await resBulletin.json();
+        const bulletinId =
+          bulletinData.records && bulletinData.records[0] && bulletinData.records[0].id;
+
+        if (!bulletinId) {
+          throw new Error("Could not read created bulletin ID from Airtable.");
+        }
+
+        // 2. Create link records in batches of 10
+        if (parsed.links.length) {
+          statusEl.textContent = "Saving link rows to Airtable…";
+
+          const batchSize = 10;
+          for (let i = 0; i < parsed.links.length; i += batchSize) {
+            const batch = parsed.links.slice(i, i + batchSize);
+            const resLinks = await fetch(airtableLinksUrl, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${airtableApiKey}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                records: batch.map((link) => ({
+                  fields: {
+                    Bulletin: [bulletinId],
+                    URL: link.URL,
+                    UniqueClicks: link.UniqueClicks,
+                    TotalClicks: link.TotalClicks,
+                  },
+                })),
+              }),
+            });
+
+            if (!resLinks.ok) {
+              const errText = await resLinks.text();
+              throw new Error(`Link batch save failed: ${resLinks.status} ${errText}`);
+            }
+          }
+        }
+
+        statusEl.innerHTML =
+          "Saved to Airtable. You can now refresh your Granicus dashboard or import another bulletin.";
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent =
+          err.message || "There was a problem saving to Airtable. Check the console for details.";
+      } finally {
+        saveButton.disabled = false;
+        parseButton.disabled = false;
+      }
+    }
+
+    async function extractTextFromPdf(file) {
+      if (!window["pdfjsLib"]) {
+        throw new Error("PDF.js failed to load.");
+      }
+
+      statusEl.textContent = "Reading PDF and extracting text…";
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let fullText = "";
+
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const content = await page.getTextContent();
+        const strings = content.items.map((item) => item.str);
+        fullText += strings.join(" ") + "\n";
+      }
+
+      return fullText;
+    }
+
+    pdfInput.addEventListener("change", async () => {
+      const file = pdfInput.files && pdfInput.files[0];
+      if (!file) {
+        pdfStatus.textContent = "No file selected";
+        pdfStatus.classList.add("pill-muted");
+        return;
+      }
+
+      pdfStatus.textContent = file.name;
+      pdfStatus.classList.remove("pill-muted");
+      statusEl.textContent = "PDF selected. Extracting text…";
+      rawInput.value = "";
+      resetPreview();
+
+      try {
+        const text = await extractTextFromPdf(file);
+        rawInput.value = text;
+        statusEl.textContent =
+          "PDF text extracted. Click “Parse preview” to check the metrics before saving.";
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent =
+          "There was a problem reading this PDF. You can still paste the report text manually.";
+      }
+    });
+
+    parseButton.addEventListener("click", () => {
+      const text = rawInput.value.trim();
+      if (!text) {
+        statusEl.textContent =
+          "Please upload a PDF or paste the Bulletin Detail Report text first.";
+        resetPreview();
+        return;
+      }
+
+      try {
+        const parsed = parseReportText(text);
+        parsedBulletin = parsed;
+        populatePreview(parsed);
+        statusEl.textContent =
+          "Check the summary looks right. If it does, click “Save to Airtable”.";
+        saveButton.disabled = false;
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent =
+          "There was a problem parsing this report. Check the console for details or try again.";
+        resetPreview();
+      }
+    });
+
+    clearButton.addEventListener("click", () => {
+      rawInput.value = "";
+      pdfInput.value = "";
+      pdfStatus.textContent = "No file selected";
+      pdfStatus.classList.add("pill-muted");
+      statusEl.textContent =
+        "Upload a PDF or paste the report content, click “Parse preview”, then review before saving.";
+      resetPreview();
+    });
+
+    saveButton.addEventListener("click", () => {
+      if (!parsedBulletin) {
+        statusEl.textContent = "Nothing to save yet. Parse a report first.";
+        return;
+      }
+      saveToAirtable(parsedBulletin);
+    });
+
+    if (seriesSelect) {
+      seriesSelect.addEventListener("change", () => {
+        if (seriesSelect.value === "__custom__") {
+          seriesCustomInput.style.display = "block";
+          seriesCustomInput.focus();
+        } else if (seriesCustomInput) {
+          seriesCustomInput.style.display = "none";
+        }
+
+        if (parsedBulletin && meta.bulletinName) {
+          meta.bulletinName.textContent = getSelectedSeriesName() || "–";
+        }
+      });
+    }
+
+    // Initial state
+    resetPreview();
+    loadBulletinNameOptions();
+  </script>
+</body>
+</html>

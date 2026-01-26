@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Kirklees UTM Dashboard – Communications Analytics Hub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    :root {
+      --bg: #e4e4e4;
+      --card: #ffffff;
+      --accent: #008491;
+      --accent-2: #6b1b78;
+      --text-main: #0f172a;
+      --text-secondary: #64748b;
+      --shadow: 0 18px 46px rgba(13, 34, 64, 0.18);
+      --border: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(0, 132, 145, 0.12), transparent 32%),
+        radial-gradient(circle at 80% 10%, rgba(107, 27, 120, 0.12), transparent 28%),
+        var(--bg);
+      padding: 24px 12px 32px;
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      width: min(1400px, 100%);
+    }
+
+    .header {
+      background: var(--card);
+      border-radius: 22px;
+      padding: 40px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(15, 23, 42, 0.06);
+      margin-bottom: 32px;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 40px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .tagline {
+      margin: 12px 0 0;
+      font-size: 16px;
+      color: var(--text-secondary);
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    .dashboard-card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(15, 23, 42, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+    }
+
+    .dashboard-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 24px 56px rgba(13, 34, 64, 0.24);
+      border-color: var(--accent);
+    }
+
+    .dashboard-icon {
+      font-size: 36px;
+      line-height: 1;
+    }
+
+    .dashboard-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .dashboard-description {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .dashboard-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .meta-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 8px;
+      background: #f1f5f9;
+      color: #64748b;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .meta-badge.primary {
+      background: rgba(0, 132, 145, 0.1);
+      color: var(--accent);
+    }
+
+    .meta-badge.secondary {
+      background: rgba(107, 27, 120, 0.1);
+      color: var(--accent-2);
+    }
+
+    .featured-section {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(15, 23, 42, 0.06);
+      margin-bottom: 32px;
+    }
+
+    .section-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin: 0 0 24px;
+    }
+
+    .export-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 28px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-decoration: none;
+      text-align: center;
+      margin-top: 16px;
+    }
+
+    .export-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(0, 132, 145, 0.2);
+    }
+
+    .quick-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-box {
+      background: linear-gradient(135deg, rgba(0, 132, 145, 0.05), rgba(107, 27, 120, 0.05));
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .footer {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(15, 23, 42, 0.06);
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    @media (max-width: 768px) {
+      .header {
+        padding: 24px;
+      }
+
+      h1 {
+        font-size: 28px;
+      }
+
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .featured-section {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>📊 Kirklees Communications Analytics</h1>
+      <p class="tagline">Unified campaign tracking, reporting, and performance analytics</p>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="featured-section">
+      <div class="section-title">📈 Quick Overview</div>
+      <div class="quick-stats">
+        <div class="stat-box">
+          <div class="stat-label">Campaign Clicks (Q2)</div>
+          <div class="stat-value">11.2K</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Email Bulletins</div>
+          <div class="stat-value">26</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Subscriber Base</div>
+          <div class="stat-value">75K+</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Avg Delivery Rate</div>
+          <div class="stat-value">98.3%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard Cards -->
+    <div class="dashboard-grid">
+      <!-- Campaign UTM Dashboard -->
+      <a href="campaign-utm-dashboard.html" class="dashboard-card">
+        <div class="dashboard-icon">🎯</div>
+        <div class="dashboard-title">Campaign Tracking</div>
+        <div class="dashboard-description">View UTM campaign performance, click distribution across channels, and link-level analytics.</div>
+        <div class="dashboard-meta">
+          <span class="meta-badge primary">Live Data</span>
+          <span class="meta-badge">Airtable</span>
+        </div>
+      </a>
+
+      <!-- Email Bulletins Dashboard -->
+      <a href="email-bulletins-dashboard.html" class="dashboard-card">
+        <div class="dashboard-icon">📧</div>
+        <div class="dashboard-title">Email Bulletins</div>
+        <div class="dashboard-description">Track Granicus email performance, subscriber growth, delivery rates, and campaign engagement metrics.</div>
+        <div class="dashboard-meta">
+          <span class="meta-badge primary">12-Month History</span>
+          <span class="meta-badge">Granicus</span>
+        </div>
+      </a>
+
+      <!-- Admin Link Creation -->
+      <a href="utm-admin.html" class="dashboard-card">
+        <div class="dashboard-icon">🔗</div>
+        <div class="dashboard-title">Create Tracked Links</div>
+        <div class="dashboard-description">Create new short links with UTM parameters, generate QR codes, and add to campaigns.</div>
+        <div class="dashboard-meta">
+          <span class="meta-badge secondary">Admin Tool</span>
+          <span class="meta-badge">Form</span>
+        </div>
+      </a>
+
+      <!-- Campaign Results View -->
+      <a href="campaign-results.html" class="dashboard-card">
+        <div class="dashboard-icon">📉</div>
+        <div class="dashboard-title">Campaign Results</div>
+        <div class="dashboard-description">Single campaign snapshot view with 5-week trend analysis and top-performing links.</div>
+        <div class="dashboard-meta">
+          <span class="meta-badge">Trends</span>
+          <span class="meta-badge">Analytics</span>
+        </div>
+      </a>
+
+      <!-- Quarterly Report Generator -->
+      <a href="quarterly-export-generator.html" class="dashboard-card">
+        <div class="dashboard-icon">📊</div>
+        <div class="dashboard-title">Quarterly Reports</div>
+        <div class="dashboard-description">Auto-generate 45-slide PowerPoint reports matching leadership presentation format.</div>
+        <div class="dashboard-meta">
+          <span class="meta-badge primary">New</span>
+          <span class="meta-badge secondary">Export</span>
+        </div>
+      </a>
+
+      <!-- Granicus Dashboard (Legacy) -->
+      <a href="granicus-dashboard.html" class="dashboard-card">
+        <div class="dashboard-icon">📬</div>
+        <div class="dashboard-title">Granicus Analytics</div>
+        <div class="dashboard-description">Legacy Granicus platform dashboard with email campaign performance metrics.</div>
+        <div class="dashboard-meta">
+          <span class="meta-badge">Legacy</span>
+          <span class="meta-badge">Archived</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- Featured: Quarterly Export -->
+    <div class="featured-section">
+      <div class="section-title">✨ New Feature: Quarterly Export Generator</div>
+      <p style="color: var(--text-secondary); line-height: 1.8; margin: 0 0 20px;">
+        Automate quarterly reporting by generating a professional 45-slide PowerPoint presentation that combines campaign tracking and email bulletin data. The generator matches the format used in leadership presentations and significantly reduces manual compilation time.
+      </p>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-bottom: 20px;">
+        <div style="padding: 16px; background: #f8fafc; border-radius: 8px;">
+          <strong style="color: var(--accent);">📈 Data Included:</strong>
+          <ul style="margin: 8px 0 0; padding-left: 20px; font-size: 13px; color: var(--text-secondary);">
+            <li>Campaign performance & channel breakdown</li>
+            <li>Email bulletin metrics & subscriber trends</li>
+            <li>Top performing links & content</li>
+            <li>KPI summary & benchmark comparisons</li>
+          </ul>
+        </div>
+        <div style="padding: 16px; background: #f8fafc; border-radius: 8px;">
+          <strong style="color: var(--accent-2);">⏱️ Time Saved:</strong>
+          <ul style="margin: 8px 0 0; padding-left: 20px; font-size: 13px; color: var(--text-secondary);">
+            <li>Replaces ~4 hours of manual compilation</li>
+            <li>Consistent format every quarter</li>
+            <li>One-click export to PowerPoint</li>
+            <li>Real-time data aggregation</li>
+          </ul>
+        </div>
+      </div>
+      <a href="quarterly-export-generator.html" class="export-button">
+        📥 Generate Your Q2 2025 Report
+      </a>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p style="margin: 0;">
+        <strong>Kirklees UTM Dashboard</strong> – Communications Team Analytics Hub<br>
+        Built with Chart.js • Powered by Airtable • Data updates in real-time
+      </p>
+    </div>
+  </div>
+</body>
+</html>

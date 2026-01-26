@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Campaign UTM Dashboard – Kirklees UTM Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      --bg: #e4e4e4;
+      --card: #ffffff;
+      --accent: #008491;
+      --accent-2: #6b1b78;
+      --text-main: #0f172a;
+      --text-secondary: #64748b;
+      --shadow: 0 18px 46px rgba(13, 34, 64, 0.18);
+      --border: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(0, 132, 145, 0.12), transparent 32%),
+        radial-gradient(circle at 80% 10%, rgba(107, 27, 120, 0.12), transparent 28%),
+        var(--bg);
+      padding: 24px 12px 32px;
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+    }
+
+    .shell {
+      width: min(1400px, 100%);
+      background: var(--card);
+      border-radius: 22px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(15, 23, 42, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .subtitle {
+      margin: 4px 0 0;
+      font-size: 13px;
+      opacity: 0.7;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: flex-end;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    select {
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      background: white;
+      color: var(--text-main);
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .kpi-card {
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .kpi-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .kpi-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .kpi-secondary {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin: 24px 0 16px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .chart-container {
+      position: relative;
+      height: 300px;
+      margin: 20px 0;
+    }
+
+    .two-column-charts {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+    }
+
+    .table-container {
+      overflow-x: auto;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .campaigns-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .campaigns-table th {
+      background: #f8fafc;
+      padding: 12px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      border-bottom: 2px solid var(--border);
+    }
+
+    .campaigns-table td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+
+    .campaigns-table tr:hover {
+      background: #f8fafc;
+    }
+
+    .campaign-name {
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .channel-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .channel-email { background: #dbeafe; color: #0c4a6e; }
+    .channel-print { background: #dcfce7; color: #166534; }
+    .channel-social { background: #fce7f3; color: #831843; }
+    .channel-web { background: #fed7aa; color: #92400e; }
+
+    .info-box {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-left: 4px solid var(--accent);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #0c4a6e;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-secondary);
+    }
+
+    @media (max-width: 768px) {
+      .shell {
+        padding: 16px;
+      }
+
+      h1 {
+        font-size: 20px;
+      }
+
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .two-column-charts {
+        grid-template-columns: 1fr;
+      }
+
+      .chart-container {
+        height: 250px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <!-- Header -->
+    <div>
+      <div class="header-row">
+        <div>
+          <h1>🔗 Campaign UTM Dashboard</h1>
+          <p class="subtitle">Short link tracking and UTM performance (Demo Data)</p>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filters">
+        <div class="filter-group">
+          <label>Select Campaign</label>
+          <select id="campaignFilter" onchange="updateDashboard()">
+            <option value="">All Campaigns</option>
+            <option value="dewsbury">Dewsbury Regeneration</option>
+            <option value="council">Our Council</option>
+            <option value="connecting">Connecting Kirklees</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI Summary -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Total Clicks</div>
+        <div class="kpi-value" id="totalClicks">—</div>
+        <div class="kpi-secondary" id="clicksNote">Across all links</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">Unique Visitors</div>
+        <div class="kpi-value" id="uniqueVisitors">—</div>
+        <div class="kpi-secondary">Approximate</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">Top Channel</div>
+        <div class="kpi-value" id="topChannel" style="font-size: 18px;">—</div>
+        <div class="kpi-secondary" id="topChannelPct">—</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">Avg Clicks/Link</div>
+        <div class="kpi-value" id="avgClicksPerLink">—</div>
+        <div class="kpi-secondary">Per tracked link</div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="two-column-charts">
+      <div>
+        <div class="section-title">📊 Clicks by Channel</div>
+        <div class="chart-container">
+          <canvas id="channelChart"></canvas>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-title">📍 Clicks by Source/Medium</div>
+        <div class="chart-container">
+          <canvas id="sourceChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Referrers -->
+    <div>
+      <div class="section-title">🌐 Top Referrers</div>
+      <div class="info-box">
+        Shows where clicks came from. Helps understand which channels and devices drove traffic.
+      </div>
+      <div class="table-container">
+        <table class="campaigns-table">
+          <thead>
+            <tr>
+              <th>Referrer / Device</th>
+              <th>Clicks</th>
+              <th>% of Total</th>
+            </tr>
+          </thead>
+          <tbody id="referrersBody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Campaign Links -->
+    <div>
+      <div class="section-title">🎯 Campaign Links & Performance</div>
+      <div class="info-box">
+        Individual link performance within this campaign. Use this to understand which content resonated most.
+      </div>
+      <div class="table-container">
+        <table class="campaigns-table">
+          <thead>
+            <tr>
+              <th>Short Code</th>
+              <th>Destination</th>
+              <th>Channel</th>
+              <th>Clicks</th>
+              <th>Performance</th>
+            </tr>
+          </thead>
+          <tbody id="linksBody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Demo campaign data with realistic UTM tracking
+    const campaigns = {
+      dewsbury: {
+        name: "Dewsbury Regeneration",
+        totalClicks: 3245,
+        links: [
+          { code: "DRE001", dest: "Cabinet approves regeneration proposal", channel: "email", clicks: 1200, source: "email", medium: "newsletter" },
+          { code: "DRE002", dest: "Investment opportunities in Dewsbury", channel: "web", clicks: 890, source: "website", medium: "homepage" },
+          { code: "DRE003", dest: "Public consultation details", channel: "print", clicks: 650, source: "poster", medium: "print" },
+          { code: "DRE004", dest: "Project timeline and updates", channel: "social", clicks: 420, source: "facebook", medium: "organic_social" },
+          { code: "DRE005", dest: "Jobs in Dewsbury regeneration", channel: "email", clicks: 85, source: "email", medium: "jobs_bulletin" }
+        ],
+        referrers: [
+          { ref: "Email (Outlook on Windows)", clicks: 1200 },
+          { ref: "Direct / QR Code Scan", clicks: 950 },
+          { ref: "Facebook (Mobile)", clicks: 380 },
+          { ref: "Chrome (Desktop)", clicks: 420 },
+          { ref: "Safari (iPhone)", clicks: 295 }
+        ]
+      },
+      council: {
+        name: "Our Council",
+        totalClicks: 5120,
+        links: [
+          { code: "OC001", dest: "Weekly Council News", channel: "email", clicks: 2100, source: "email", medium: "weekly_news" },
+          { code: "OC002", dest: "Council Services Directory", channel: "web", clicks: 1450, source: "website", medium: "organic" },
+          { code: "OC003", dest: "Councillor Elections Information", channel: "print", clicks: 890, source: "leaflet", medium: "print" },
+          { code: "OC004", dest: "Council YouTube Channel", channel: "social", clicks: 520, source: "twitter", medium: "organic_social" },
+          { code: "OC005", dest: "Budget Consultation", channel: "web", clicks: 160, source: "email", medium: "special_campaign" }
+        ],
+        referrers: [
+          { ref: "Email (Outlook on Windows)", clicks: 2100 },
+          { ref: "Google (Desktop)", clicks: 1450 },
+          { ref: "Direct / QR Code Scan", clicks: 890 },
+          { ref: "Twitter (Mobile)", clicks: 450 },
+          { ref: "Safari (iPhone)", clicks: 230 }
+        ]
+      },
+      connecting: {
+        name: "Connecting Kirklees",
+        totalClicks: 2840,
+        links: [
+          { code: "CK001", dest: "Transport & Roadworks Update", channel: "email", clicks: 950, source: "email", medium: "transport_news" },
+          { code: "CK002", dest: "Cycling Routes Map", channel: "web", clicks: 680, source: "website", medium: "transport" },
+          { code: "CK003", dest: "Bus Service Information", channel: "print", clicks: 520, source: "poster", medium: "print" },
+          { code: "CK004", dest: "Parking Information", channel: "web", clicks: 410, source: "mobile_app", medium: "app" },
+          { code: "CK005", dest: "Travel Planning Tool", channel: "social", clicks: 280, source: "linkedin", medium: "organic_social" }
+        ],
+        referrers: [
+          { ref: "Email (Gmail on Android)", clicks: 950 },
+          { ref: "Google (Desktop)", clicks: 680 },
+          { ref: "Direct / QR Code Scan", clicks: 520 },
+          { ref: "Mobile App", clicks: 410 },
+          { ref: "LinkedIn (Desktop)", clicks: 280 }
+        ]
+      }
+    };
+
+    let channelChart = null;
+    let sourceChart = null;
+
+    function updateDashboard() {
+      const campaignId = document.getElementById('campaignFilter').value;
+
+      let links, totalClicks, referrersData;
+
+      if (!campaignId || campaignId === '') {
+        // Combine all campaigns
+        links = [];
+        referrersData = {};
+        totalClicks = 0;
+
+        Object.values(campaigns).forEach(c => {
+          links.push(...c.links);
+          totalClicks += c.totalClicks;
+          c.referrers.forEach(r => {
+            referrersData[r.ref] = (referrersData[r.ref] || 0) + r.clicks;
+          });
+        });
+      } else {
+        // Single campaign
+        const campaign = campaigns[campaignId];
+        links = campaign.links;
+        totalClicks = campaign.totalClicks;
+        referrersData = {};
+        campaign.referrers.forEach(r => {
+          referrersData[r.ref] = r.clicks;
+        });
+      }
+
+      const uniqueVisitors = Math.round(totalClicks * 0.75); // Estimate
+      const avgClicksPerLink = (totalClicks / links.length).toFixed(0);
+
+      // Top channel
+      const channelClicks = {};
+      links.forEach(l => {
+        channelClicks[l.channel] = (channelClicks[l.channel] || 0) + l.clicks;
+      });
+      const topChannel = Object.entries(channelClicks).sort((a, b) => b[1] - a[1])[0];
+
+      document.getElementById('totalClicks').textContent = totalClicks.toLocaleString();
+      document.getElementById('uniqueVisitors').textContent = uniqueVisitors.toLocaleString();
+      document.getElementById('topChannel').textContent = topChannel[0].charAt(0).toUpperCase() + topChannel[0].slice(1);
+      document.getElementById('topChannelPct').textContent = `${Math.round((topChannel[1] / totalClicks) * 100)}% of clicks`;
+      document.getElementById('avgClicksPerLink').textContent = avgClicksPerLink;
+
+      updateCharts(links, channelClicks);
+      updateTables(campaignId);
+    }
+
+    function updateCharts(links, channelClicks) {
+      // Channel chart
+      const channelLabels = Object.keys(channelClicks);
+      const channelData = Object.values(channelClicks);
+
+      const ctx1 = document.getElementById('channelChart').getContext('2d');
+      if (channelChart) channelChart.destroy();
+      channelChart = new Chart(ctx1, {
+        type: 'doughnut',
+        data: {
+          labels: channelLabels.map(c => c.charAt(0).toUpperCase() + c.slice(1)),
+          datasets: [{
+            data: channelData,
+            backgroundColor: ['#008491', '#6b1b78', '#f59e0b', '#10b981']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { font: { size: 12, weight: 600 }, padding: 16 }
+            }
+          }
+        }
+      });
+
+      // Source/Medium chart
+      const sourceClicks = {};
+      links.forEach(l => {
+        const key = `${l.source} / ${l.medium}`;
+        sourceClicks[key] = (sourceClicks[key] || 0) + l.clicks;
+      });
+
+      const sourceLabels = Object.keys(sourceClicks).slice(0, 6);
+      const sourceData = sourceLabels.map(l => sourceClicks[l]);
+
+      const ctx2 = document.getElementById('sourceChart').getContext('2d');
+      if (sourceChart) sourceChart.destroy();
+      sourceChart = new Chart(ctx2, {
+        type: 'bar',
+        data: {
+          labels: sourceLabels,
+          datasets: [{
+            label: 'Clicks',
+            data: sourceData,
+            backgroundColor: '#008491'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          indexAxis: 'y',
+          plugins: { legend: { display: false } },
+          scales: { x: { beginAtZero: true } }
+        }
+      });
+    }
+
+    function updateTables(campaignId) {
+      let campaign;
+
+      if (!campaignId || campaignId === '') {
+        // Combine all campaigns
+        const allLinks = [];
+        const allReferrers = {};
+        Object.values(campaigns).forEach(c => {
+          allLinks.push(...c.links);
+          c.referrers.forEach(r => {
+            allReferrers[r.ref] = (allReferrers[r.ref] || 0) + r.clicks;
+          });
+        });
+        campaign = {
+          links: allLinks,
+          referrers: Object.entries(allReferrers).map(([ref, clicks]) => ({ ref, clicks }))
+        };
+      } else {
+        campaign = campaigns[campaignId];
+      }
+
+      const total = campaign.links.reduce((sum, l) => sum + l.clicks, 0);
+
+      // Referrers table
+      const referrersBody = document.getElementById('referrersBody');
+      referrersBody.innerHTML = '';
+      campaign.referrers.sort((a, b) => b.clicks - a.clicks).forEach(r => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${r.ref}</td>
+          <td>${r.clicks.toLocaleString()}</td>
+          <td>${Math.round((r.clicks / total) * 100)}%</td>
+        `;
+        referrersBody.appendChild(row);
+      });
+
+      // Links table
+      const linksBody = document.getElementById('linksBody');
+      linksBody.innerHTML = '';
+      campaign.links.sort((a, b) => b.clicks - a.clicks).forEach(l => {
+        const row = document.createElement('tr');
+        const channelClass = `channel-${l.channel}`;
+        row.innerHTML = `
+          <td><strong>${l.code}</strong></td>
+          <td>${l.dest}</td>
+          <td><span class="channel-badge ${channelClass}">${l.channel}</span></td>
+          <td><strong>${l.clicks.toLocaleString()}</strong></td>
+          <td>${Math.round((l.clicks / total) * 100)}%</td>
+        `;
+        linksBody.appendChild(row);
+      });
+    }
+
+    // Initialize
+    updateDashboard();
+  </script>
+</body>
+</html>

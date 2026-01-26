@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Kirklees UTM Studio – Snapshot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      --bg: #e4e4e4;
+      --card: #ffffff;
+      --accent: #008491;
+      --accent-2: #6b1b78;
+      --text-main: #0f172a;
+      --shadow: 0 18px 46px rgba(13, 34, 64, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(0, 132, 145, 0.12), transparent 32%),
+        radial-gradient(circle at 80% 10%, rgba(107, 27, 120, 0.12), transparent 28%),
+        var(--bg);
+      padding: 24px 12px 32px;
+      color: var(--text-main);
+      display: flex;
+      justify-content: centre;
+    }
+
+    .shell {
+      width: min(1080px, 100%);
+      background: var(--card);
+      border-radius: 22px;
+      padding: 20px 20px 22px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(15, 23, 42, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: centre;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .subtitle {
+      margin: 2px 0 0;
+      font-size: 13px;
+      opacity: 0.85;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: centre;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      background: rgba(0, 132, 145, 0.08);
+      font-size: 11px;
+      font-weight: 600;
+      color: #0f172a;
+      white-space: nowrap;
+    }
+
+    .chip-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #16a34a;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: flex-end;
+      margin-top: 6px;
+    }
+
+    .filters label {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 3px;
+    }
+
+    .filters select {
+      padding: 7px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(15, 23, 42, 0.18);
+      font-size: 13px;
+      outline: none;
+      background: #ffffff;
+    }
+
+    .filters select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(0, 132, 145, 0.2);
+    }
+
+    .filter-field {
+      display: flex;
+      flex-direction: column;
+      min-width: 160px;
+    }
+
+    .status-bar {
+      font-size: 12px;
+      opacity: 0.85;
+      margin-top: 4px;
+    }
+
+    .status-bar strong {
+      font-weight: 600;
+    }
+
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .kpi-card {
+      background: linear-gradient(145deg, #f6f7fb 0%, #edf3f9 100%);
+      border-radius: 14px;
+      padding: 12px 12px 10px;
+      border: 1px solid rgba(15, 23, 42, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-height: 72px;
+    }
+
+    .kpi-label {
+      font-size: 11px;
+      opacity: 0.75;
+    }
+
+    .kpi-value {
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .kpi-footnote {
+      font-size: 10px;
+      opacity: 0.75;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1.6fr;
+      gap: 14px;
+      margin-top: 8px;
+    }
+
+    .panel {
+      background: #f6f7fb;
+      border-radius: 16px;
+      padding: 12px 12px 10px;
+      border: 1px solid rgba(15, 23, 42, 0.06);
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .panel-subtitle {
+      margin: 0;
+      font-size: 11px;
+      opacity: 0.75;
+    }
+
+    .chart-wrapper {
+      position: relative;
+      height: 240px;
+      width: 100%;
+    }
+
+    .insights-list {
+      margin: 6px 0 0;
+      padding-left: 18px;
+      font-size: 12px;
+    }
+
+    .insights-list li + li {
+      margin-top: 3px;
+    }
+
+    .muted {
+      opacity: 0.7;
+    }
+
+    @media (max-width: 900px) {
+      .kpi-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .shell {
+        padding: 16px 12px 16px;
+      }
+
+      .kpi-row {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="header-row">
+      <div>
+        <h1>Campaign traffic snapshot</h1>
+        <p class="subtitle">
+          High-level performance of tracked links created via kirklees.link.
+        </p>
+      </div>
+      <div class="chip">
+        <span class="chip-dot"></span>
+        Live data – auto-generated from Airtable
+      </div>
+    </div>
+
+    <div class="filters">
+      <div class="filter-field">
+        <label for="dateRangeFilter">Reporting period</label>
+        <select id="dateRangeFilter">
+          <option value="last30">Last 30 days</option>
+          <option value="all">All time</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="statusBar" class="status-bar">Loading data from Airtable…</div>
+
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-label">Total clicks</div>
+        <div id="kpiTotalClicks" class="kpi-value">–</div>
+        <div class="kpi-footnote">Across all tracked links in this period</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Links used</div>
+        <div id="kpiLinks" class="kpi-value">–</div>
+        <div class="kpi-footnote">Distinct short URLs that received at least one click</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Active campaigns</div>
+        <div id="kpiCampaigns" class="kpi-value">–</div>
+        <div class="kpi-footnote">Campaigns with clicks in this period</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Top channel</div>
+        <div id="kpiTopChannel" class="kpi-value">–</div>
+        <div id="kpiTopChannelFootnote" class="kpi-footnote muted">–</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <div class="panel-header">
+          <p class="panel-title">Where clicks came from</p>
+          <p class="panel-subtitle">Share of clicks by channel (e.g. intranet, email, poster, SMS).</p>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="channelChart"></canvas>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <p class="panel-title">Top campaigns</p>
+          <p class="panel-subtitle">Campaigns generating the most traffic in this period.</p>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="campaignChart"></canvas>
+        </div>
+        <ul id="insightsList" class="insights-list">
+          <li class="muted">Insights will appear here once data has loaded.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script>
+    // ---------------------------
+    // CONFIG – loaded from config.js
+    // ---------------------------
+    const airtableBaseId = window.CONFIG.AIRTABLE_BASE_ID;
+    const airtableTableName = "UTMLinks";
+    const airtableApiKey = window.CONFIG.AIRTABLE_API_KEY;
+
+    const airtableUrl = `https://api.airtable.com/v0/${airtableBaseId}/${encodeURIComponent(
+      airtableTableName
+    )}`;
+
+    const dateRangeFilter = document.getElementById("dateRangeFilter");
+    const statusBar = document.getElementById("statusBar");
+
+    const kpiTotalClicks = document.getElementById("kpiTotalClicks");
+    const kpiLinks = document.getElementById("kpiLinks");
+    const kpiCampaigns = document.getElementById("kpiCampaigns");
+    const kpiTopChannel = document.getElementById("kpiTopChannel");
+    const kpiTopChannelFootnote = document.getElementById("kpiTopChannelFootnote");
+    const insightsList = document.getElementById("insightsList");
+
+    let allRecords = [];
+    let channelChart;
+    let campaignChart;
+
+    function formatNumber(n) {
+      return n.toLocaleString("en-GB");
+    }
+
+    function normaliseString(value) {
+      if (!value) return "";
+      return value.toString().trim();
+    }
+
+    function applyDateFilter(records) {
+      const value = dateRangeFilter.value;
+      if (value === "all") {
+        return records;
+      }
+
+      const now = new Date();
+      const threshold = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      threshold.setHours(0, 0, 0, 0);
+
+        return records.filter((record) => {
+        const fields = record.fields || {};
+
+        // Prefer the explicit Date field, fall back to Airtable's createdTime
+        let rawDate = fields.Date;
+        if (!rawDate && record.createdTime) {
+        rawDate = record.createdTime;
+        }
+        if (!rawDate) return false;
+
+        const dateOnly = rawDate.slice(0, 10); // YYYY-MM-DD from ISO
+        const parts = dateOnly.split("-");
+        if (parts.length !== 3) return false;
+        const [y, m, d] = parts.map((p) => Number(p));
+        if (!y || !m || !d) return false;
+
+        const recordDate = new Date(y, m - 1, d);
+        recordDate.setHours(0, 0, 0, 0);
+        return recordDate >= threshold;
+    });
+    }
+
+    function updateStatusBar(filtered) {
+      const total = allRecords.length;
+      const periodLabel = dateRangeFilter.value === "last30" ? "last 30 days" : "all time";
+      statusBar.innerHTML = `Snapshot based on <strong>${filtered.length}</strong> links from <strong>${periodLabel}</strong> (out of ${total} total records in Airtable).`;
+    }
+
+    function computeAggregates(records) {
+      const clicksByChannel = new Map();
+      const clicksByCampaign = new Map();
+      const linkClicks = [];
+      let totalClicks = 0;
+
+      records.forEach((record) => {
+        const f = record.fields || {};
+        const clicks = typeof f.Clicks === "number" ? f.Clicks : 0;
+        const channel = normaliseString(f.Channel) || "Uncategorised";
+        const campaign = normaliseString(f.Campaign) || "Uncategorised";
+        const code = normaliseString(f.Code);
+        const shortUrl = normaliseString(f.ShortURL);
+
+        if (clicks <= 0) return;
+
+        totalClicks += clicks;
+        clicksByChannel.set(channel, (clicksByChannel.get(channel) || 0) + clicks);
+        clicksByCampaign.set(campaign, (clicksByCampaign.get(campaign) || 0) + clicks);
+        linkClicks.push({ clicks, campaign, channel, code, shortUrl });
+      });
+
+      const linksWithClicks = linkClicks.length;
+      const campaignsActive = clicksByCampaign.size;
+
+      return {
+        totalClicks,
+        linksWithClicks,
+        campaignsActive,
+        clicksByChannel,
+        clicksByCampaign,
+        linkClicks,
+      };
+    }
+
+    function updateKpis(aggregates) {
+      const { totalClicks, linksWithClicks, campaignsActive, clicksByChannel } = aggregates;
+
+      kpiTotalClicks.textContent = totalClicks ? formatNumber(totalClicks) : "0";
+      kpiLinks.textContent = linksWithClicks ? formatNumber(linksWithClicks) : "0";
+      kpiCampaigns.textContent = campaignsActive ? formatNumber(campaignsActive) : "0";
+
+      if (!clicksByChannel.size) {
+        kpiTopChannel.textContent = "–";
+        kpiTopChannelFootnote.textContent = "No clicks recorded in this period.";
+        return;
+      }
+
+      const channels = Array.from(clicksByChannel.entries());
+      channels.sort((a, b) => b[1] - a[1]);
+      const [topName, topClicks] = channels[0];
+
+      const totalChannelClicks = channels.reduce((sum, [, c]) => sum + c, 0);
+      const pct = totalChannelClicks ? (topClicks / totalChannelClicks) * 100 : 0;
+
+      kpiTopChannel.textContent = topName;
+      kpiTopChannelFootnote.textContent = `${formatNumber(
+        topClicks
+      )} clicks · ${pct.toFixed(1)}% of all tracked traffic`;
+    }
+
+    function updateChannelChart(aggregates) {
+      const { clicksByChannel } = aggregates;
+      const labels = Array.from(clicksByChannel.keys());
+      const data = Array.from(clicksByChannel.values());
+
+      const ctx = document.getElementById("channelChart").getContext("2d");
+
+      if (channelChart) channelChart.destroy();
+
+      if (!labels.length) {
+        channelChart = new Chart(ctx, {
+          type: "doughnut",
+          data: {
+            labels: ["No data"],
+            datasets: [{ data: [1] }],
+          },
+          options: {
+            plugins: {
+              legend: { display: false },
+            },
+          },
+        });
+        return;
+      }
+
+      channelChart = new Chart(ctx, {
+        type: "doughnut",
+        data: {
+          labels,
+          datasets: [
+            {
+              data,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: "right",
+              labels: {
+                boxWidth: 14,
+                font: { size: 11 },
+              },
+            },
+            tooltip: {
+              callbacks: {
+                label: (context) => {
+                  const total = data.reduce((sum, v) => sum + v, 0);
+                  const value = context.parsed;
+                  const pct = total ? (value / total) * 100 : 0;
+                  return `${context.label}: ${formatNumber(value)} clicks (${pct.toFixed(1)}%)`;
+                },
+              },
+            },
+          },
+          cutout: "60%",
+        },
+      });
+    }
+
+    function updateCampaignChart(aggregates) {
+      const { clicksByCampaign } = aggregates;
+      const entries = Array.from(clicksByCampaign.entries());
+      entries.sort((a, b) => b[1] - a[1]);
+
+      const top = entries.slice(0, 6);
+      const labels = top.map(([name]) => name);
+      const data = top.map(([, clicks]) => clicks);
+
+      const ctx = document.getElementById("campaignChart").getContext("2d");
+
+      if (campaignChart) campaignChart.destroy();
+
+      if (!labels.length) {
+        campaignChart = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: ["No data"],
+            datasets: [{ data: [0] }],
+          },
+          options: {
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { ticks: { font: { size: 10 } } },
+              y: { beginAtZero: true, ticks: { precision: 0 } },
+            },
+          },
+        });
+        return;
+      }
+
+      campaignChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "Clicks",
+              data,
+            },
+          ],
+        },
+        options: {
+          indexAxis: "y",
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              beginAtZero: true,
+              ticks: {
+                precision: 0,
+              },
+            },
+            y: {
+              ticks: {
+                font: { size: 10 },
+              },
+            },
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (context) => `${formatNumber(context.parsed.x)} clicks`,
+              },
+            },
+          },
+        },
+      });
+    }
+
+    function updateInsights(aggregates) {
+      const { totalClicks, clicksByChannel, clicksByCampaign } = aggregates;
+
+      if (!totalClicks) {
+        insightsList.innerHTML =
+          '<li class="muted">No clicks recorded for this period yet. Once campaigns start driving traffic, key insights will appear here automatically.</li>';
+        return;
+      }
+
+      const channelEntries = Array.from(clicksByChannel.entries()).sort(
+        (a, b) => b[1] - a[1]
+      );
+      const campaignEntries = Array.from(clicksByCampaign.entries()).sort(
+        (a, b) => b[1] - a[1]
+      );
+
+      const items = [];
+
+      if (channelEntries.length) {
+        const [topChannel, topChannelClicks] = channelEntries[0];
+        const pct = (topChannelClicks / totalClicks) * 100;
+        items.push(
+          `<li><strong>${topChannel}</strong> is currently the strongest channel, delivering ${formatNumber(
+            topChannelClicks
+          )} clicks (${pct.toFixed(1)}% of all tracked traffic).</li>`
+        );
+      }
+
+      if (campaignEntries.length) {
+        const [topCampaign, topCampaignClicks] = campaignEntries[0];
+        items.push(
+          `<li>The top campaign is <strong>${topCampaign}</strong> with ${formatNumber(
+            topCampaignClicks
+          )} clicks in this period.</li>`
+        );
+      }
+
+      if (channelEntries.length >= 3) {
+        const top3Clicks =
+          channelEntries[0][1] +
+          channelEntries[1][1] +
+          channelEntries[2][1];
+        const pctTop3 = (top3Clicks / totalClicks) * 100;
+        items.push(
+          `<li>The top three channels account for ${pctTop3.toFixed(
+            1
+          )}% of all clicks, showing where staff are most likely to engage.</li>`
+        );
+      }
+
+      items.push(
+        `<li class="muted">These figures are based on links created via kirklees.link and will update automatically as new campaigns go live.</li>`
+      );
+
+      insightsList.innerHTML = items.join("");
+    }
+
+    function recompute() {
+      const filtered = applyDateFilter(allRecords);
+      updateStatusBar(filtered);
+      const aggregates = computeAggregates(filtered);
+      updateKpis(aggregates);
+      updateChannelChart(aggregates);
+      updateCampaignChart(aggregates);
+      updateInsights(aggregates);
+    }
+
+    async function fetchAllRecords() {
+      let records = [];
+      let offset = null;
+
+      try {
+        do {
+          const url = new URL(airtableUrl);
+          url.searchParams.set("pageSize", "100");
+          if (offset) {
+            url.searchParams.set("offset", offset);
+          }
+
+          const res = await fetch(url.toString(), {
+            headers: {
+              Authorization: `Bearer ${airtableApiKey}`,
+            },
+          });
+
+          if (!res.ok) {
+            let errText = `Request failed with status ${res.status}`;
+            try {
+              const err = await res.json();
+              if (err && err.error && err.error.message) {
+                errText = `Airtable error: ${err.error.message}`;
+              }
+            } catch (e) {
+              // ignore parse errors
+            }
+            throw new Error(errText);
+          }
+
+          const data = await res.json();
+          if (Array.isArray(data.records)) {
+            records = records.concat(data.records);
+          }
+          offset = data.offset;
+        } while (offset);
+
+        return records;
+      } catch (err) {
+        console.error("Error fetching Airtable records", err);
+        statusBar.textContent = err.message || "Unable to load data from Airtable.";
+        return [];
+      }
+    }
+
+    async function initSnapshot() {
+      statusBar.textContent = "Loading data from Airtable…";
+
+      const records = await fetchAllRecords();
+      allRecords = records;
+
+      if (!records.length) {
+        statusBar.textContent =
+          "No records found. Create some links in the UTM admin first.";
+        kpiTotalClicks.textContent = "0";
+        kpiLinks.textContent = "0";
+        kpiCampaigns.textContent = "0";
+        kpiTopChannel.textContent = "–";
+        kpiTopChannelFootnote.textContent =
+          "No data available yet for this period.";
+        updateInsights({ totalClicks: 0, clicksByChannel: new Map(), clicksByCampaign: new Map() });
+        return;
+      }
+
+      recompute();
+      statusBar.textContent =
+        "Snapshot ready. This view is designed for quick leadership updates and presentations.";
+    }
+
+    dateRangeFilter.addEventListener("change", recompute);
+
+    initSnapshot();
+  </script>
+</body>
+</html>

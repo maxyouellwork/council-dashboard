@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Email Bulletins Dashboard – Kirklees UTM Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      --bg: #e4e4e4;
+      --card: #ffffff;
+      --accent: #008491;
+      --accent-2: #6b1b78;
+      --text-main: #0f172a;
+      --text-secondary: #64748b;
+      --shadow: 0 18px 46px rgba(13, 34, 64, 0.18);
+      --border: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(0, 132, 145, 0.12), transparent 32%),
+        radial-gradient(circle at 80% 10%, rgba(107, 27, 120, 0.12), transparent 28%),
+        var(--bg);
+      padding: 24px 12px 32px;
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+    }
+
+    .shell {
+      width: min(1400px, 100%);
+      background: var(--card);
+      border-radius: 22px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(15, 23, 42, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .subtitle {
+      margin: 4px 0 0;
+      font-size: 13px;
+      opacity: 0.7;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: flex-end;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input, select {
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      background: white;
+      color: var(--text-main);
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .kpi-card {
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .kpi-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .kpi-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .kpi-secondary {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin: 24px 0 16px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .chart-container {
+      position: relative;
+      height: 300px;
+      margin: 20px 0;
+    }
+
+    .table-container {
+      overflow-x: auto;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .bulletins-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .bulletins-table th {
+      background: #f8fafc;
+      padding: 12px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      border-bottom: 2px solid var(--border);
+    }
+
+    .bulletins-table td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+
+    .bulletins-table tr:hover {
+      background: #f8fafc;
+    }
+
+    .bulletin-subject {
+      font-weight: 600;
+      color: var(--accent);
+      max-width: 300px;
+      word-break: break-word;
+    }
+
+    .metric-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .metric-badge.good {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .metric-badge.avg {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .metric-badge.low {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .info-box {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-left: 4px solid var(--accent);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #166534;
+    }
+
+    @media (max-width: 768px) {
+      .shell {
+        padding: 16px;
+      }
+
+      h1 {
+        font-size: 20px;
+      }
+
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .chart-container {
+        height: 250px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <!-- Header -->
+    <div>
+      <div class="header-row">
+        <div>
+          <h1>📧 Email Bulletins Dashboard</h1>
+          <p class="subtitle">Historical performance of all Kirklees email campaigns (12 months)</p>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filters">
+        <div class="filter-group">
+          <label>Search by Bulletin Subject</label>
+          <input type="text" id="searchFilter" placeholder="e.g., Weekly News, Kirklees Together..." onkeyup="filterAndUpdate()">
+        </div>
+        <div class="filter-group">
+          <label>Filter by Bulletin Type</label>
+          <select id="typeFilter" onchange="filterAndUpdate()">
+            <option value="">All Types</option>
+            <option value="Weekly">Weekly News</option>
+            <option value="Read Kirklees">Read Kirklees</option>
+            <option value="Staying Healthy">Staying Healthy</option>
+            <option value="Tenant">Tenant Newsletter</option>
+            <option value="Business">Business</option>
+            <option value="Getting involved">Getting Involved</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI Summary -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Total Bulletins (12m)</div>
+        <div class="kpi-value" id="totalBulletins">—</div>
+        <div class="kpi-secondary">Across all lists and campaigns</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">Total Recipients</div>
+        <div class="kpi-value" id="totalRecipients">—</div>
+        <div class="kpi-secondary">Emails sent in period</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">Avg Delivery Rate</div>
+        <div class="kpi-value" id="avgDelivery">—</div>
+        <div class="kpi-secondary">% of emails successfully delivered</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">Data Period</div>
+        <div class="kpi-value" id="datePeriod" style="font-size: 16px;">—</div>
+        <div class="kpi-secondary">12-month historical data</div>
+      </div>
+    </div>
+
+    <!-- Trend Chart -->
+    <div>
+      <div class="section-title">📈 Bulletins Sent Over Time</div>
+      <div class="chart-container">
+        <canvas id="trendChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Top Performers -->
+    <div>
+      <div class="section-title">🏆 Top Performing Bulletin Types (by volume)</div>
+      <div class="chart-container">
+        <canvas id="typeChart"></canvas>
+      </div>
+    </div>
+
+    <!-- All Bulletins Table -->
+    <div>
+      <div class="section-title">📋 All Bulletins</div>
+      <div class="info-box">
+        Shows all bulletins sent in the past 12 months from your Granicus account. Click any row to see detailed performance data. Use filters above to find specific campaigns.
+      </div>
+      <div class="table-container">
+        <table class="bulletins-table">
+          <thead>
+            <tr>
+              <th>Sent Date</th>
+              <th>Bulletin Subject</th>
+              <th>Type</th>
+              <th>Recipients</th>
+              <th>Delivered</th>
+              <th>Delivery %</th>
+            </tr>
+          </thead>
+          <tbody id="bulletinsTableBody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Real data from your CSV export
+    const bulletinsData = [
+      { sent: "2026-01-16", subject: "Kirklees Together", to: "Subscribers of *Kirklees news*", recipients: 17611, delivered: 17345, deliveryPct: 98.5 },
+      { sent: "2026-01-13", subject: "Work Placements | Events | Scams", to: "Subscribers of Businesses in Kirklees", recipients: 1868, delivered: 1784, deliveryPct: 95.4 },
+      { sent: "2026-01-09", subject: "Weekly News Update", to: "Subscribers of *Kirklees news*", recipients: 17628, delivered: 17377, deliveryPct: 98.6 },
+      { sent: "2026-01-09", subject: "Staying Healthy Bulletin: Staying healthy in 2026", to: "Subscribers of *Staying healthy*", recipients: 12268, delivered: 12040, deliveryPct: 98.2 },
+      { sent: "2025-12-19", subject: "Weekly News Update", to: "Subscribers of *Kirklees news*", recipients: 17617, delivered: 17341, deliveryPct: 98.4 },
+      { sent: "2025-12-17", subject: "Read Kirklees - The Christmas & New Year Edition", to: "Subscribers of Read Kirklees", recipients: 10248, delivered: 10085, deliveryPct: 98.3 },
+      { sent: "2025-12-13", subject: "A special end-of-year update from your Tenant-Led Panel", to: "Subscribers of *Tenant Newsletter*", recipients: 4958, delivered: 4883, deliveryPct: 98.5 },
+      { sent: "2025-12-12", subject: "Weekly news bulletin", to: "Subscribers of *Kirklees news*", recipients: 17619, delivered: 17484, deliveryPct: 98.7 },
+      { sent: "2025-12-12", subject: "Christmas On Our Doorstep Guide", to: "Subscribers of *On Our Doorstep*", recipients: 3950, delivered: 3835, deliveryPct: 97.1 },
+      { sent: "2025-12-05", subject: "Weekly News Update", to: "Subscribers of *Kirklees news*", recipients: 17632, delivered: 17412, deliveryPct: 98.8 },
+      { sent: "2025-12-01", subject: "Events | Networking | Business Support", to: "Subscribers of Businesses in Kirklees", recipients: 1845, delivered: 1772, deliveryPct: 96.2 },
+      { sent: "2025-11-21", subject: "Weekly News Update", to: "Subscribers of *Kirklees news*", recipients: 17627, delivered: 17387, deliveryPct: 98.8 },
+      { sent: "2025-11-19", subject: "Read Kirklees November/December 2025", to: "Subscribers of Read Kirklees", recipients: 10269, delivered: 10111, deliveryPct: 98.5 },
+      { sent: "2025-11-14", subject: "Weekly News Bulletin", to: "Subscribers of *Kirklees news*", recipients: 17630, delivered: 17406, deliveryPct: 98.8 },
+      { sent: "2025-11-13", subject: "Kirklees Top 100 | Management Essentials", to: "Subscribers of Businesses in Kirklees", recipients: 1836, delivered: 1763, deliveryPct: 96.0 },
+      { sent: "2025-11-07", subject: "Weekly News Update", to: "Subscribers of *Kirklees news*", recipients: 17673, delivered: 17420, deliveryPct: 98.6 },
+      { sent: "2025-11-07", subject: "Staying Healthy Bulletin: Flu vaccine", to: "Subscribers of *Staying healthy*", recipients: 12260, delivered: 12064, deliveryPct: 98.4 },
+      { sent: "2025-10-31", subject: "Welcome to your new tenant bulletin!", to: "Subscribers of *Tenant Newsletter*", recipients: 4955, delivered: 4883, deliveryPct: 98.6 },
+      { sent: "2025-10-31", subject: "Your latest news from Kirklees Together", to: "Subscribers of *Kirklees news*", recipients: 17742, delivered: 17476, deliveryPct: 98.5 },
+      { sent: "2025-10-24", subject: "Weekly News Bulletin", to: "Subscribers of *Kirklees news*", recipients: 17757, delivered: 17502, deliveryPct: 98.5 },
+      { sent: "2025-10-23", subject: "Boo! We're back", to: "Subscribers of *On Our Doorstep*", recipients: 3940, delivered: 3847, deliveryPct: 97.6 },
+      { sent: "2025-10-23", subject: "Staying Healthy Bulletin: Dewsbury Health Event", to: "Subscribers of *Staying healthy*", recipients: 12294, delivered: 12109, deliveryPct: 98.4 },
+      { sent: "2025-10-17", subject: "Your weekly news round-up in Kirklees", to: "Subscribers of *Kirklees news*", recipients: 17782, delivered: 17505, deliveryPct: 98.3 },
+      { sent: "2025-10-15", subject: "Read Kirklees - October/November 2025", to: "Subscribers of Read Kirklees", recipients: 10342, delivered: 10124, deliveryPct: 97.9 },
+      { sent: "2025-10-13", subject: "Local Democracy Week | Postal vote", to: "Subscribers of Getting involved", recipients: 10645, delivered: 10414, deliveryPct: 97.7 },
+      { sent: "2025-10-03", subject: "Weekly News Update", to: "Subscribers of *Kirklees news*", recipients: 17984, delivered: 17458, deliveryPct: 97.3 },
+      { sent: "2025-10-03", subject: "Staying Healthy Bulletin: Breast Cancer Awareness", to: "Subscribers of *Staying healthy*", recipients: 12473, delivered: 12110, deliveryPct: 97.0 }
+    ];
+
+    let trendChart = null;
+    let typeChart = null;
+
+    function getBulletinType(subject) {
+      if (subject.includes('Weekly')) return 'Weekly';
+      if (subject.includes('Read Kirklees')) return 'Read Kirklees';
+      if (subject.includes('Staying Healthy')) return 'Staying Healthy';
+      if (subject.includes('Tenant') || subject.includes('tenant')) return 'Tenant';
+      if (subject.includes('Business') || subject.includes('business')) return 'Business';
+      if (subject.includes('Getting involved') || subject.includes('Volunteering')) return 'Getting involved';
+      return 'Other';
+    }
+
+    function formatDate(dateStr) {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+
+    function updateKPIs(filtered = bulletinsData) {
+      const totalBulletins = filtered.length;
+      const totalRecipients = filtered.reduce((sum, b) => sum + b.recipients, 0);
+      const avgDelivery = (filtered.reduce((sum, b) => sum + b.deliveryPct, 0) / totalBulletins).toFixed(1);
+
+      document.getElementById('totalBulletins').textContent = totalBulletins;
+      document.getElementById('totalRecipients').textContent = totalRecipients.toLocaleString();
+      document.getElementById('avgDelivery').textContent = avgDelivery + '%';
+      document.getElementById('datePeriod').textContent = '12 months';
+    }
+
+    function updateTable(filtered = bulletinsData) {
+      const tbody = document.getElementById('bulletinsTableBody');
+      tbody.innerHTML = '';
+
+      filtered.forEach(b => {
+        const row = document.createElement('tr');
+        const deliveryBadgeClass = b.deliveryPct >= 98 ? 'good' : b.deliveryPct >= 95 ? 'avg' : 'low';
+        row.innerHTML = `
+          <td>${formatDate(b.sent)}</td>
+          <td class="bulletin-subject">${b.subject}</td>
+          <td>${getBulletinType(b.subject)}</td>
+          <td>${b.recipients.toLocaleString()}</td>
+          <td>${b.delivered.toLocaleString()}</td>
+          <td><span class="metric-badge ${deliveryBadgeClass}">${b.deliveryPct}%</span></td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function updateCharts(filtered = bulletinsData) {
+      // Group by month
+      const byMonth = {};
+      filtered.forEach(b => {
+        const date = new Date(b.sent);
+        const monthKey = date.toLocaleDateString('en-GB', { year: 'numeric', month: 'short' });
+        if (!byMonth[monthKey]) byMonth[monthKey] = 0;
+        byMonth[monthKey]++;
+      });
+
+      const months = Object.keys(byMonth).sort();
+      const counts = months.map(m => byMonth[m]);
+
+      const ctx1 = document.getElementById('trendChart').getContext('2d');
+      if (trendChart) trendChart.destroy();
+      trendChart = new Chart(ctx1, {
+        type: 'line',
+        data: {
+          labels: months,
+          datasets: [{
+            label: 'Bulletins Sent',
+            data: counts,
+            borderColor: '#008491',
+            backgroundColor: 'rgba(0, 132, 145, 0.1)',
+            borderWidth: 2,
+            pointRadius: 5,
+            pointBackgroundColor: '#008491',
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+
+      // Group by type
+      const byType = {};
+      filtered.forEach(b => {
+        const type = getBulletinType(b.subject);
+        if (!byType[type]) byType[type] = 0;
+        byType[type]++;
+      });
+
+      const types = Object.keys(byType);
+      const typeCounts = types.map(t => byType[t]);
+
+      const ctx2 = document.getElementById('typeChart').getContext('2d');
+      if (typeChart) typeChart.destroy();
+      typeChart = new Chart(ctx2, {
+        type: 'doughnut',
+        data: {
+          labels: types,
+          datasets: [{
+            data: typeCounts,
+            backgroundColor: ['#008491', '#6b1b78', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right',
+              labels: { font: { size: 12, weight: 600 }, padding: 16 }
+            }
+          }
+        }
+      });
+    }
+
+    function filterAndUpdate() {
+      const search = document.getElementById('searchFilter').value.toLowerCase();
+      const type = document.getElementById('typeFilter').value;
+
+      const filtered = bulletinsData.filter(b => {
+        const matchesSearch = b.subject.toLowerCase().includes(search);
+        const matchesType = !type || getBulletinType(b.subject) === type;
+        return matchesSearch && matchesType;
+      });
+
+      updateKPIs(filtered);
+      updateTable(filtered);
+      updateCharts(filtered);
+    }
+
+    // Initialize
+    updateKPIs();
+    updateTable();
+    updateCharts();
+  </script>
+</body>
+</html>
