@@ -5,9 +5,13 @@
 # CLOUDFLARE_ACCOUNT_ID for Pages and silently targets the wrong account.
 # CLOUDFLARE_ACCOUNT_ID must be your PERSONAL account, not the firm's.
 name: Deploy
+# Manual only. wip-router is a Worker bound to a ZONE ROUTE, and the deploy
+# token has Workers Scripts:Edit but not Zone -> Workers Routes:Edit, so the
+# route update fails with Cloudflare auth error 10000.
+#
+# To restore auto-deploy: add "Zone -> Workers Routes -> Edit" to the API token
+# at dash.cloudflare.com/profile/api-tokens, then put the push trigger back.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 jobs:
